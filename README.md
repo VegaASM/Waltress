@@ -15,13 +15,21 @@ Why the name Waltress? Waltress is one of Daysha's cats, and she is a shy black+
 This Package includes the following folders & files~
 
 -- Engine #The handwritten source files for Waltress's "Engine" Binary Files
+
 -- Examples #Contains multiple pre-made source.s, code.bin, and code.txt files to assist you in understanding the required format of writing your own files for usage of Waltress
+
 -- Source-HBC #The source files for the Waltress HBC Application
+
 -- Waltress #The Waltress HBC Application
+
 -- ERRORS.txt #Definition of error codes that may appear when running the HBC Application
+
 -- FORMAT.txt #Everything you need to know regarding format rules for Assembling and Disassembling
+
 -- HISTORY.txt #Summary of past revisions
+
 -- LICENSE #Copy of GPL 3.0
+
 -- README.md #This document you are reading right now
 
 Waltress can assemble and disassemble raw PPC code. She can also compile and decompile certain Gecko Cheat Codes. Please ***READ*** the FORMAT.txt file before using Waltress!!!
