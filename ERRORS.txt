@@ -1,0 +1,62 @@
+Use this txt file to know what your Error Code means.
+
+The following is the only error code that can occur before the Waltress Main Menu screen:
+-1 = FatInit failure
+
+The following errors can only occur when the Disassemble option is chosen:
+-2 = fopen failure on dbin.bin
+-3 = fseek failure on dbin.bin
+-4 = memalign failure for dbin.bin
+-5 = fread failure on dbin.bin
+-6 = fclose failure on dbin.bin
+-7 = fopen failure on pre-open of source.s, this means that a source.s file already exists so disassembling was aborted
+-8 = fopen failure on code.bin, this means that no code.bin file is present to be disassembled
+-9 = fseek failure on code.bin
+-10 = memalign failure for code.bin
+-11 = fread failure on code.bin
+-12 = fclose failure on code.bin
+-13 = memalign failure for new source.s
+-14 = code.txt is not in proper format; ofc this error code can never occur if code.bin was the original input file for Disassembling
+-15 = sscanf failure for changing code.txt to code.bin for Waltress Disassembler Engine use; ofc this error code can never occur if code.bin was the original input file for Disassembling
+-16 = C2 Gecko Opcode wasn't found when decompiling a Mem80 Insert ASM
+-17 = 04 Gecko Opcode wasn't found when decompiling a Mem80 32-bit RAM Write
+-18 = 06 Gecko Opcode wasn't found when decompiling a Mem80 String Write
+-19 = C0 Gecko Opcode wasn't found when decompiling a Execute ASM
+*Please note the previous 4 error codes can also occur if you have any pre-pended items in the code.txt/bin before the Gecko Opcode, which isn't allowed.
+-20 = sprintf fail regarding changing the changing to Gecko Opcode from a hex value in code.bin to its ASCII equivalent. This error can occur even if you chose to disassemble/decompil from code.txt because the App will temp convert it to a code.bin before sending it to Waltress's Disassembler Engine.
+-21 = C2 code doesn't end in a null word
+-22 = Waltress Disassembler Error Code -1; invalid r3 memory pointer
+-23 = Waltress Disassembler Error Code -2; sprintf failure
+-24 = fopen (creation) failure on new source.s
+-25 = fwrite failure on new source.s
+-26 = fclose failure on new source.s
+
+The following errors can only occur when the Assemble option is chosen:
+-27 = fopen failure on abin.bin
+-28 = fseek failure on abin.bin
+-29 = memalign failure for abin.bin
+-30 = fread failure on abin.bin
+-31 = fclose failure on abin.bin
+-32 = fopen failure on pre-open of code.txt/bin, this means that a code.bin file already exists so assembling was aborted
+-33 = fopen failure on source.s, this means that no source.s file is present to be assembled
+-34 = fseek failure on source.s
+-35 = memalign failure for source.s
+-36 = fread failure on source.s
+-37 = fclose failure on source.s
+-38 = memalign failure for new code.bin
+-39 = A single enter immediately after the C0 Gecko Header is not present
+-40 = A single enter immediately after the C2/06/04 Gecko Header is not present
+-41 = sscanf failure on C2/06/04 Gecko Header
+-42 = For 32-RAM Write Codes only. End of file was reached before the source-line enter was found, fyi this would be the final enter in the source.s file.
+-43 = Waltress Assembler Error Code -1; invalid r3 memory pointer
+-44 = Waltress Assembler Error Code -2; invalid r4 memory pointer
+-45 = Waltress Assembler Error Code -3; incorrect insruction parameter or bad format
+-46 = memalign failure for code.txt memory space for changing code.bin to code.txt; ofc this error can never occur if you are assembling to a code.bin file
+-47 = sprintf failure for changing code.bin to code.txt; ofc this error code can never occur if you are assembling to a code.bin file
+-48 = fopen failure on new code.txt/bin
+-49 = fwrite failure on new code.txt/bin
+-50 = fclose failure on new code.txt/bin
+
+---
+
+NOTE: An error could occur for deleting the original input file (if chosen to do so after a successful assembly/dissasembly. The error (it's cause) is shown on the screen instead of being reported via a negative numerical value.

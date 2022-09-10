@@ -1,0 +1,133 @@
+This document will contain all the formatting rules and other important notes for using Waltress. *READ THIS*
+
+Simplified Mnemonics supported are only the following~
+
+bctr
+bctrl
+blr
+blrl
+clrlwi(.)
+clrrwi(.)
+cmpw
+cmpwi
+cmplw
+cmplwi
+crclr
+crmove
+crnot
+crset
+li
+lis
+mfctr
+mflr
+mftb
+mftbl
+mftbu
+mfxer
+mr(.)
+mtcr
+mtctr
+mtlr
+mtxer
+nop
+not(.)
+rotlw(.)
+rotlwi(.)
+slwi(.)
+srwi(.)
+sub(./o)
+subc(./o)
+trap
+
+Unfortunately, all other simplified mnemonics for the branch instructions (i.e. beq, bdnz, etc) are not present. This is because there is at least 300+ unique simplified mnemonics that will need to be coded into Waltress.
+
+subi, subis, subic, and subic. simplified mnemonics may never be added in future releases due to the SIMM rule. For more info regarding this, read further below. Getting rid of Waltress's non-traditional SIMM rule isn't too difficult to do, it's just that I personally hate the idea of typing out 32-bit IMM's in a source file when 32-bit numerical values literally cannot fit into Broadway's 32-bit sized instructions.
+
+=====================
+
+Rules for Assembling / Compiling ~
+
+To assemble/compile from source, you will need to type your source in a file called source.s. When using the App, source.s must be in the apps/Waltress folder of your SD/USB device.
+
+Here are all the rules/requirements of source.s--
+
+*source.s file must be in UTF-8 encoding. If you are not sure what this is, don't worry since this encoding is usually the default for all text editors.
+
+*The source.s file must exactly begin with its first instruction *UNLESS* you writing out a Gecko Code to be compiled. Do not add any prepended spaces or have blank/entered lines at the beginning of the file.
+
+*Any source.s file that is for a Gecko Code, must contain what's called a "Gecko Header" at the very start of the file. Here's a list of all Gecko Headers---
+
+!04xxxxxx #Use this for 32-bit RAM Writes. xxxxxx = lower 24 bits of Address.
+!06xxxxxx #Use this for String Writes. xxxxxx = lower 24 bits of Address.
+!C0 #Use this for C0 Execute ASM Codes. The final blr instruction is added for you. Do *NOT* include it in your source.s file.
+!C2xxxxxx #Use this for C2 Insert ASM Codes; xxxxxx = lower 24 bits of Address.
+
+*After the Gecko Header, simply enter into the next line below to begin the source of the Code.
+
+*To enter into any new line of source.s for writing a new instruction, simply press Enter once and begin typing the next new instruction (if applicable). Thus *EVERY* instruction of your source.s must end in you pressing Enter.
+
+*The above rule ALSO applies to the very last instruction of your source.s. Meaning, source.s file *MUST* end in a blank line (that you entered into).
+
+*Assembler Directives are NOT supported.
+*Branch labels are NOT supported, you must use numerical values for the SIMM (Hexadecimal values only)
+*Notes/Comments are NOT supported.
+*Instruction Names must be lowercase (i.e. nop)
+*Register numbers must be in decimal form
+*"sp" for r1 and "rtoc" for r2 are NOT supported.
+*GPRs & FPRs must be designated via the lowercase letter r (i.e. r31)
+*Paired Single Instructions still use lowercase f to represent the FPRs (i.e. ps_abs f5, f5)
+*CR Fields must be designated via lowercase letters cr (i.e. cr0)
+*cr0 MUST be written on in any comparison instruction (cmpwi cr0, r3, 0xFF)
+*All IMM's must be Hexadecimal. This includes the IMM field in mtfsfi(.), and includes targer addr's in branch instructions
+*BO and BI fields in branch conditional, branch conditional ctr, and branch conditional lr instructions must be in decimal
+*SH, MB, and ME fields of the rlw-family of instructions must be in decimal
+*NB field for lswi and stswi must be in decimal
+*SR field for mfsr and mtsr must be in decimal
+*CRM field for mtcrf must be in Hexadecimal
+*FM field for mtfsf(.) must be in Hexadecimal
+*If a value is zero and it's suppose to be in Hexadecimal, it still must be prepended with '0x' (i.e. 0x0)
+*W and I fields in Paired Single loads/stores must be in decimal
+*Extra Spacing should be ok, but you cannot double+ enter in your source.s when typing out new lines.
+*To assemble illegal instructions, use ".long 0xXXXXXXXX" where X = The hex value. The 32-bit hex value must be filled in completely (i.e. .long 0x00184CF0)
+
+=====================
+
+IMPORTANT NOTE ABOUT SIMM's (signed Immediate values's)! ***READ THIS****
+
+Other assemblers (such as Devkit, PyiiASMH, CodeWrite, etc) require you to sign-extend any IMM's you have for instructions that treat said IMM's as signed values. (i.e. li r5, 0xFFFFFFFF).
+
+This is technically incorrect. Using any of the mentioned assemblers, go ahead and assemble "li r5, 0xFFFFFFFF". It will be assembled to 0x3860FFFF. Obviously, the word value of 0xFFFFFFFF cannot fit into 0x3860FFFF.
+
+The Broadway Processor actually does the sign-extension itself when it fetches and decodes the instruction. So for example, when Broadway reads 0xFFFF within 0x3860FFFF, it will sign extend 0xFFFF. Thus, 0xFFFF becomes 0xFFFFFFFF, and Broadway will use that full word value to process the instruction in question.
+
+Waltress doe *NOT* require you to sign extend any SIMM's in your source. This may be hard for you to adjust to. So for example, if you wanted to write out "li r5, 0xFFFFFFFF", you would instead write it out like this...
+
+li r5, 0xFFFF
+
+Remember, this special rule about SIMM's also applies to branch instructions!
+
+=====================
+
+Rules for Disassembling / Decompiling~
+
+To disassemble/decompile, the file with assembled PPC Instructions (or the compiled Gecko Cheat Code) must be named code.txt (if using a plain jane text file) or code.bin (if using a raw binary file). When using the App, code.txt/bin must be in the apps/Waltress folder of your SD/USB device.
+
+Disassembling code.txt/bin always results in a source.s file that 100% compliant with all the rules above regarding Assembling. If it can be disassembled, it can ALWAYS be re-assembled.
+
+Here are all the rules/requirements of code.txt--
+
+*Must in UTF-8
+*Code.txt shall start with its first instruction. do not have any spaces, enters, etc present before the first instruction
+*Obviously, if code.txt is a Gecko Code, be sure to properly include any Gecko related stuff before the first assembled instruction, and include any Gecko related stuff afterwards (i.e. C2 Insert ASM Null Word Ender)
+*Two assembled instructions must be present per 'line'. Meaning for any line, you type out one instruction. Press space and then type out the next instruction (if applicable). Once you have completed a line of two instructions and need to write out a new line, simply press enter *once* and begin typing out the next line.
+*If your code.txt has an odd amount of instructions (this can only exist for Raw ASM usage ofc), then code.txt's final line would be just one instruction. After this instruction, press Space once. You MUST end the file off in a single Space!!
+*If your code.txt has an even amount of instructions, then code.txt's final line will have two instructions present. After this line, press Enter once. You MUST end the file off in a single Enter!!
+*Do NOT have any comments/notes present in the code.txt file.
+
+Here are all the rules/requirements of code.bin--
+
+*Only have assembled/compiled content/code in the code.bin file. Literally nothing else. That's it.
+
+=====================
+
+Confused? Plenty of examples are provided in the Examples folder.

@@ -1,0 +1,23 @@
+7/30/2022 (v0.5):
+*Can now decompile Gecko Cheat Codes. New secondary menu within App allows users to choose the disassembly/decompilation option.
+
+7/26/2022 (v0.4):
+*Can now compile Gecko Cheat Codes. However, proper decompiling is not supported (example: a Gecko Opcode present at the start of code.bin/txt will be diassembled to its PPC instruction equivalent). Therefore, Waltress can still only disassemble in a 'raw style'. Raw assembling still available.
+*Gecko Cheat Codes supported (for compiling) are Mem80 32-bit RAM Write (04 Opcode), Mem80 String Write (06 Opcode), Execute ASM (C0 Opcode), and Insert ASM (C2 Opcode).
+*C0 compilation will auto add required blr for you. No need to include it in your source.s file.
+
+7/11/2022 (v0.3):
+*Codes can now be assembled-to/disassembled-from a code.txt file. Binary file option is still available.
+*Added more error code returns for both assembler and disassembler engine due to added option of code.txt
+*Option added in to delete original input file after a successful assembly/disassembly.
+*More typo and code clean up
+
+7/5/2022 (v0.2):
+*Added in blr(l), bctr(l), sub(./o), and subc(./o) simplified mnemonics
+*Re-did the initial process of creating the HBC application, saved a few lines of pre-generated Assembly code for the Inline file
+*Got rid of the -33 error code in the HBC app (aka -3 in Assembler engine). If a source line is simply too long, we will let it output the same error as former -34.
+*Engine files no longer hardcoded to certain function addr's that were specific to PAL MKWii. Empty reserved spots in lookup table now serve that job. Function addr's are written to reserved spots by software (HBC App)
+*Fixed a bunch of typos (lol)
+
+7/4/2022 (v0.1):
+*Initial public release
