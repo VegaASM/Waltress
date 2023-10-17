@@ -1,0 +1,138 @@
+First thing's First. Waltress is an alpha-type program. Meaning it's not ready for "production" usage. Bugs and weird errors will most likely occur. Do not rely on Waltress as your main Gecko Code assembler. If Waltress ever reaches version 1.0.0, then it will be considered ready for production use.
+
+===========
+
+Features~
+- Full support for 04, 06, C0, and C2 Gecko codetypes
+- Yes, the blr is auto-added for you on C0 codes
+- Uses a special header for Gecko codes. There's no need to select an option when assembling/disassembling. Just include the header at the very very top of your file. See -Gecko-Header-Format- below for details.
+- Has features that no other known PPC assembler possesses, they are..
+
+1. Checks if rA=/=r0 for update-type quantized stores and loads
+2. Checks if NB in lswi does not cause rD's loaded bytes to spill into rA
+3. Checks for all valid SPRs for both mfspr and mtspr, note that the validity is only matched for the Wii Broadway chip
+4. Includes support for Broadway's rarely known chip ID SPRs
+5. When disassembling, clrlwi, clrrwi, rotlwi, rotlw, slwi, and srwi are used over their standard mnemonic forms.
+6. Anything that can be assembled can be disassembled and vice versa. THIS IS HUGE!!! No other PPC Assembler can do this.
+
+============
+
+As mentioned earlier, Waltress is an alpha-type program. Therefore, it does not include some basic features you would expect. Those are...
+- You can only place comments on lines that contain instruction (after said instruction). Do *NOT* place comments on blank/non-instruction lines!!!
+- Branch labels not supported
+- Assembler directives not supported
+- IMM's must follow a certain format (read -IMM-format- below)
+- Register alias's of "sp" and "rtoc" are not supported.
+
+These may be added/fixed in the future, who knows.
+
+Waltress supports all simplified mnemonics except for the following...
+
+inslwi
+insrwi
+extlwi
+extrwi
+clrlswi
+la
+
+============
+
+-Important NOTE regarding mfspr and mtspr simplified mnemonics-
+
+Any valid SPR in the mfspr/mtspr can be used in the following format..
+mtNAME rX
+mfNAME rX
+
+NAME = the SPR's name ofc
+
+Example:
+mtl2cr r11 #Move r11 contents to L2CR
+mfhid0 r30 #Move HID0 contents to r30
+
+No other PPC assembler can do this for all the SPRs!
+
+Because this special SPR format is Waltress-unique, you *CANNOT* use the "legacy format" which is valid for some SPRS. For example....
+mtibatu 3, r12 #Move r12 contents to IBAT3u
+
+The above instruction *WON'T* work in Waltress. Use the new and improved format instead!
+mtibat3u r12 #Better format! Hooray!
+
+============
+
+-Gecko-Header-Format-
+
+The syntax for the Header is as follows...
+
+!<codetype><24-bit address if applicable>
+
+Example 04 header
+!04565AAC
+
+Example 06 header
+!06565AAC
+
+Example C2 header
+!C2565AAC
+
+Example C0 header
+!C0
+
+Just add the appropriate header to source.s/code.txt for your Gecko code to be assembled/disassembled correctly.
+
+IMPORTANT NOTE: Due to my lazy coding skills, the header must be at the very very very start of your file. No spaces, enters, comments, etc are allowed before or within the header. Anything afterwards is fine ofc.
+
+============
+
+-IMM-Format-
+
+Excluding the optional Gecko Header, the only strict formatting Waltress requires is Hex vs Decimal when it comes to IMM (immediate value) usage.
+
+All 16-bit IMMs (i.e. SIMM in addi, i.e. UIMM in ori) *must* be in Hex. Therefore 12 would be typed as 0xC, and something like -4 would be typed as 0xFFFFFFFC. Zeroes must be 0x0. Fyi, you can have leading zeroes in your IMM (i.e. 0x00000001 is fine).
+
+All 12-bit SIMMs in the psq load/store instructions *must* be in Hex.
+
+All Branch SIMMs *must* be in Hex.
+
+IMM in mtfsfi(.) *must* be in Hex.
+
+CRM field in mtcrf *must* be in Hex.
+
+FM field in mtfsf(.) *must* be in Hex.
+
+All other fields/immediate-values not mentioned above *must* be in Decimal.
+
+=============
+
+NOTE: For the following instructions...
+
+*trap
+*bcX with BO of 0b10100
+*blr
+*blrl
+*bctr
+*bctrl
+*bdnz
+*bdz
+*bdnzctr
+*bdnzctrl
+*bdzctr
+*bdzctrl
+*bdnzlr
+*bdnzlrl
+*bdzlr
+*bdzlrl
+
+...may not re-assemble back to their 100% exact original pre-assembled instruction (Hexadecimal word value) after disassembling from an original code.txt file. This is because these simplified mnemonics have fields and/or register values that qualify as "Don't Care Values". Meaning that these fields/values can be anything and the instruction in question still qualifies as being the simplified mnemonic. When Waltress assembles instructions with these "don't care values", they are set to 0. Please note that all other known PPC Assemblers are "plagued" with this. It's impossible to fix without completely getting rid of the simplified mnemonics.
+
+NOTE: For the bcX, bcctrX, and bclrX instructions, all "don't care" values for the BO field *only* *MUST* be low or else the instruction is treated as illegal (which is what other PPC assemblers do as well).
+
+If the above 2 notes make zero sense to you, then don't worry. They won't effect you.
+
+Final NOTE:
+
+bcX with BO of 0b10100 is an alternative instruction that exactly mimics an unconditional branch. Therefore I've made custom Waltress-unique mnemonics for these 4 rare instructions.
+
+bcX with BO of 0b10100 = bal 0xXXXX (branch always)
+bcX with BO of 0b10100 && aa high = bala 0xXXXX (branch always absolute)
+bcX with BO of 0b10100 && lk high = ball 0xXXXX (branch always & link)
+bcX with BO of 0b10100 && aa && lk high = balla 0xXXXX (branch always absolute & link)

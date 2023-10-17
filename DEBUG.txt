@@ -1,0 +1,29 @@
+How to Debug the Desktop App if desired. Linux Guide only.
+
+Step 1: Install QEMU and GDB
+sudo apt-get update
+sudo apt-get install qemu-user qemu-user-static gdb-multiarch build-essential
+
+Step 2: Run Waltress-DV with QEMU (process will stall, this is normal)
+cd DV
+qemu-ppc -g 1234 ./main
+
+Step 3: While leaving Step 2's Terminal intact, open a different terminal in same directory and run this GDB command:
+gdb-multiarch -q --nh \
+  -ex 'set architecture ppc' \
+  -ex 'file main' \
+  -ex 'target remote localhost:1234' \
+  -ex 'break main' \
+  -ex continue \
+  -ex 'layout split' \
+  -ex 'layout regs'
+  
+Now you are ready to use GDB to step thru and debug Waltress-DV. Registers may not be available. If this is the case, issue 1 stepi command. You will now see the registers.
+
+GDB quick guide (use Google for help with other commands):
+stepi = step instruction
+break *0xX = breakpoint at address, X = address (i.e. break *0x100008FC)
+del X = delete breakpoint via its assigned number. whenever you set or hit a bp, GDB will show the BP's assigned number
+continue = run program after hitting break point
+quit = exits GDB and properly ends the QEMU emulation. Be sure to always quit GDB first before closing the qemu terminal
+
