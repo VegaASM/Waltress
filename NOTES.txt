@@ -5,20 +5,18 @@ First thing's First. Waltress is an alpha-type program. Meaning it's not ready f
 Features~
 - Full support for 04, 06, C0, and C2 Gecko codetypes
 - Yes, the blr is auto-added for you on C0 codes
-- Uses a special header for Gecko codes. There's no need to select an option when assembling/disassembling. Just include the header at the very very top of your file. See -Gecko-Header-Format- below for details.
-- Has features that no other known PPC assembler possesses, they are..
-
-1. Checks if rA=/=r0 for update-type quantized stores and loads
-2. Checks if NB in lswi does not cause rD's loaded bytes to spill into rA
-3. Checks for all valid SPRs for both mfspr and mtspr, note that the validity is only matched for the Wii Broadway chip
-4. Includes support for Broadway's rarely known chip ID SPRs
-5. When disassembling, clrlwi, clrrwi, rotlwi, rotlw, slwi, and srwi are used over their standard mnemonic forms.
-6. Anything that can be assembled can be disassembled and vice versa. THIS IS HUGE!!! No other PPC Assembler can do this.
+- Uses a special header for Gecko codes. There's no need to select an option when assembling/disassembling. Just include the header at the very top of your file. See -Gecko-Header-Format- below for details.
+- If there is a faulty instruction when assembling, Waltress will tell you which instruction it is (if multiple, Waltress only lists the top/first one)
+- Checks all rA=/=r0 rules for all applicable load/store instructions
+- Checks if NB in lswi does not cause rD's loaded bytes to spill into rA
+- Checks for all valid SPRs for both mfspr and mtspr, note that the validity is only matched for the Wii Broadway chip
+- Includes support for Broadway's rarely known chip ID SPRs
+- When disassembling, clrlwi, clrrwi, rotlwi, rotlw, slwi, and srwi are used over their standard mnemonic forms.
+- Anything that can be assembled can be disassembled and vice versa.
 
 ============
 
 As mentioned earlier, Waltress is an alpha-type program. Therefore, it does not include some basic features you would expect. Those are...
-- You can only place comments on lines that contain instruction (after said instruction). Do *NOT* place comments on blank/non-instruction lines!!!
 - Branch labels not supported
 - Assembler directives not supported
 - IMM's must follow a certain format (read -IMM-format- below)
@@ -79,15 +77,15 @@ Example C0 header
 
 Just add the appropriate header to source.s/code.txt for your Gecko code to be assembled/disassembled correctly.
 
-IMPORTANT NOTE: Due to my lazy coding skills, the header must be at the very very very start of your file. No spaces, enters, comments, etc are allowed before or within the header. Anything afterwards is fine ofc.
+IMPORTANT NOTE: Do not place any notes/comments before the Gecko Header.
 
 ============
 
 -IMM-Format-
 
-Excluding the optional Gecko Header, the only strict formatting Waltress requires is Hex vs Decimal when it comes to IMM (immediate value) usage.
+Waltress does require some strict Formatting in regards to Hex vs Decimal when it comes to IMM (immediate value) usage. Leading zeroes are permitted. 
 
-All 16-bit IMMs (i.e. SIMM in addi, i.e. UIMM in ori) *must* be in Hex. Therefore 12 would be typed as 0xC, and something like -4 would be typed as 0xFFFFFFFC. Zeroes must be 0x0. Fyi, you can have leading zeroes in your IMM (i.e. 0x00000001 is fine).
+All 16-bit IMMs (i.e. SIMM in addi, i.e. UIMM in ori) *must* be in Hex.
 
 All 12-bit SIMMs in the psq load/store instructions *must* be in Hex.
 
@@ -98,6 +96,8 @@ IMM in mtfsfi(.) *must* be in Hex.
 CRM field in mtcrf *must* be in Hex.
 
 FM field in mtfsf(.) *must* be in Hex.
+
+All negative values *must* be in there "unsigned" form. (i.e. -0x4 must be typed as 0xFFFFFFFC). This really only becomes a nuisance for unconditional branch SIMMs.
 
 All other fields/immediate-values not mentioned above *must* be in Decimal.
 

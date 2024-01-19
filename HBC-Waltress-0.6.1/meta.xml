@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="1">
 	<name>Waltress</name>
-	<version>0.6</version>
-        <release_date>20231016</release_date>
+	<version>0.6.1</version>
+        <release_date>20240118</release_date>
 	<coder>Vega</coder>
 	<short_description>PPC Assembler</short_description>
 	<long_description>The first ever PPC Assembler written in PPC. Can also be used as a Gecko Cheat Code assembler. Not intended for 'mainstream' usage. Use at your own risk.

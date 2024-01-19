@@ -27,4 +27,3 @@ bdnz+ fixwaltress_nulls_loop
 li r0, 0 #Store final final null byte, overwrites most recent newly written 0xA ofc. *NOTE* this is important as it ensures final string is terminated, sanity for overflow
 stb r0, 0 (r3)
 blr
-

@@ -5,7 +5,7 @@ Requirements: You must already have DevkitPPC installed and its environment set.
 1. Open a terminal and go to the directory where your PPC Binutils are located. This will be located at /whereyouinstalledDevKit/devkitpro/devkitPPC/bin
 cd /whereyouinstalledDevKit/devkitpro/devkitPPC/bin
 
-2. Run the following commands in terminal (NOTE there's probably an easier way to modify the source file(s) to not have all this silly object code stuff, but whatever)
+2. Run the following commands in terminal (NOTE there's definitely an easier way to modify the source file(s) to not have all this silly object code stuff, but skill issue you know)
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/main.s -o /path/to/HBC-Source/build/main.o
 
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/assemble.s -o /path/to/HBC-Source/build/assemble.o
@@ -16,7 +16,8 @@ cd /whereyouinstalledDevKit/devkitpro/devkitPPC/bin
 
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/add_header.s -o /path/to/HBC-Source/build/add_header.o
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/get_geckoheadertype.s -o /path/to/HBC-Source/build/get_geckoheadertype.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/saveANDstrip_geckoheader.s -o /path/to/HBC-Source/build/saveANDstrip_geckoheader.o
+./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/saveANDoverwrite_geckoheader.s.s -o /path/to/HBC-Source/build/saveANDoverwrite_geckoheader.s.o
+./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/newline_fixer.s -o /path/to/HBC-Source/build/newline_fixer.o
 
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/codetxt2bin.s -o /path/to/HBC-Source/build/codetxt2bin.o
 ./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/codetxtparser.s -o /path/to/HBC-Source/build/codetxtparser.o

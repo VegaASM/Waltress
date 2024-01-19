@@ -1,5 +1,20 @@
+1/18/2024 (v0.6.1): Note that Down
+*Restrictions on location of Comments removed
+*Chain comments (/*example*/) now allowed
+*Restrictions of having spaces, tabs, & enters before Gecko Header removed
+*Fixed bug on interpreting new lines (Enters vs Carriages)
+
 10/16/2023 (v0.6): The End of Hibernation
-*Both engine sources are completely overhauled. When assembling, Waltress will show the instruction that it cannot assemble (first one, not all). Quirky SIMM ranges fixed. Fixed bug where mfsr was not assembling correctly (SR was always being assembled as 0). Fixed bug where any float or ps multiply related instruction refused to assemble if fD was f8 or higher. A desktop version is now included!! All simplified mnemonics (except clrlslwi, la, extlwi, extrwi, inslwi, & insrwi) now supported. Hooray! Binary file support removed. File deletion support removed. Super strict formatting removed. Files can now have comments albeit it some limitation. Files can now have extra spaces, extra enters, etc. Quirky Error Code system is removed and replaced with Error Text Messages.
+*Both engine sources are completely overhauled.
+*When assembling, Waltress will show the instruction that it cannot assemble (first one, not all).
+*Quirky SIMM ranges fixed.
+*Fixed bug where mfsr was not assembling correctly (SR was always being assembled as 0).
+*Fixed bug where any float or ps multiply related instruction refused to assemble if fD was f8 or higher.
+*A desktop version is now included (requires QEMU)!!
+*All simplified mnemonics (except clrlslwi, la, extlwi, extrwi, inslwi, & insrwi) now supported. Hooray!
+*Binary file support removed. File deletion support removed. Super strict formatting removed.
+*Files can now have comments albeit it some limitation. Files can now have extra spaces, extra enters, etc.
+*Quirky Error Code system is removed and replaced with Error Text Messages.
 
 7/30/2022 (v0.5): Yet Another Bump 
 *Can now disassemble Gecko Cheat Codes. New secondary menu within App allows users to choose the disassembly option.

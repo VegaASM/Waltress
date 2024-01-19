@@ -161,4 +161,3 @@ subi r4, r4, 4 #Decrement shift-left amount
 bdnz+ as2hexloop
 mr r3, r5
 blr
-

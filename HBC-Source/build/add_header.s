@@ -3,7 +3,6 @@
 	.section	".text"
 	.ident	"GCC: (devkitPPC release 44.2) 13.2.0"
 
-
 #r3 = pointer to source.s/code.txt
 #r4 = source.s/code.txt size EXcluding null
 #r5 = pointer to gecko header
@@ -79,6 +78,7 @@ lwz r29, 0x14 (sp)
 mtlr r0
 addi sp, sp, 0x0020
 blr
+
 
 
 

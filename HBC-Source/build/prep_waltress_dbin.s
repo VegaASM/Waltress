@@ -126,5 +126,3 @@ cmpw r6, r4
 bnelr- #r3 still 0
 mr r3, r5 #Recover r3 before returning to signal everything is good to go
 blr
-
-

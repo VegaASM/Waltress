@@ -202,20 +202,10 @@ lis r3, dmemaligncodetxtEC@h
 ori r3, r3, dmemaligncodetxtEC@l
 beq- disassemble_error
 
-#Memset the allocated block to null
-#Why? For the rare chance that...
-#r28 (with space for null byte) is 32-byte aligned and...
-#..the specific byte space for the null byte in our memaligned block has junk values (non-zero) in it.
-#This will 100% ensure code.txt has an appended null byte ender
-mr r3, r27
-li r4, 0
-mr r5, r28
-bl memset
-
 #Dump code.txt, close
 mr r3, r27
 li r4, 1
-mr r5, r28 #count (real size)
+subi r5, r28, 1 #This is because we added 1 fake byte from earlier!!!
 mr r6, r31
 bl fread
 subi r0, r28, 1
@@ -229,6 +219,15 @@ cmpwi r3, 0
 lis r3, dfclosecodetxtEC@h
 ori r3, r3, dfclosecodetxtEC@l
 bne- disassemble_error
+
+#Append null byte to end of file, this is needed for future funcs
+subi r3, r28, 1
+li r4, 0
+stbx r4, r3, r27
+
+#Patch carriages
+mr r3, r27
+bl newline_fixer
 
 #Get the Gecko Header type from code.txt
 #-1 = Invalid
@@ -245,15 +244,13 @@ ori r3, r3, dgeckoheaderEC@l
 blt- disassemble_error
 beq- skip_codetxt_geckostripper
 
-#Call func that strips and saves gecko header
+#Call func that saves gecko header then overwrites it with spaces
 #r3 returns malloced space where header is saved at
 #r3 arg = gecko header type
 #r4 arg = code.txt ptr, code.txt must end in null byte
-#r5 arg = code.txt size (INcluding null byte afterwards)
 mr r3, r22
 mr r4, r27
-mr r5, r28
-bl saveANDstrip_geckoheader
+bl saveANDoverwrite_geckoheader
 mr. r20, r3
 lis r3, dsavestripmallocEC@h
 ori r3, r3, dsavestripmallocEC@l
@@ -267,7 +264,7 @@ mr r3, r27
 mr r4, r28 #TODO fix me, r28 is incorrect (needs to be decremented) but it actually doesn't matter, func will still work correctly
 bl codetxtparser #No error check for this
 
-#Gen post parser code.txt size (exclude null byte on count)
+#Gen post parser code.txt size (EXclude null byte on count)
 mr r3, r27
 bl codetxtpostparsersize
 mr r25, r3 #Save in r25, no error check for this func

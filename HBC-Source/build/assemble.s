@@ -213,20 +213,10 @@ lis r3, amemalignsourceEC@h
 ori r3, r3, amemalignsourceEC@l
 beq- assembleerror
 
-#Memset the allocated block to null
-#Why? For the rare chance that...
-#r28 (with space for null byte) is 32-byte aligned and...
-#..the specific byte space for the null byte in our memaligned block has junk values (non-zero) in it.
-#This will 100% ensure source.s has an appended null byte ender
-mr r3, r27
-li r4, 0
-mr r5, r28
-bl memset
-
 #Dump source.s, close
 mr r3, r27
 li r4, 1
-mr r5, r28 #count (real size) *NOTE* this may be issue in future? this needs -2 and dasm needs -1
+subi r5, r28, 2 #This is because we added 2 fake bytes from earlier!!!
 mr r6, r31
 bl fread
 subi r0, r28, 2
@@ -241,10 +231,14 @@ lis r3, afclosesourceEC@h
 ori r3, r3, afclosesourceEC@l
 bne- assembleerror
 
-#Append an 0xA to file (2nd to last byte of allocated block), because we allocated 2 extra bytes and memsetted the shit, we will still have an ender null byte
+#Append an 0x0A00 to file (last halfword of allocated block), because we allocated 2 extra bytes and future funcs require the file to end in 0x0A00 (enter new line then null)
 subi r3, r28, 2
-li r4, 0xA
-stbx r4, r3, r27
+li r4, 0x0A00
+sthx r4, r3, r27
+
+#Patch carriages
+mr r3, r27
+bl newline_fixer
 
 #Get the Gecko Header type from source.s
 #-1 = Invalid
@@ -261,15 +255,13 @@ ori r3, r3, ageckoheaderEC@l
 blt- assembleerror
 beq- skipstrip
 
-#Call func that strips and saves gecko header
+#Call func that saves gecko header then overwrites it with spaces
 #r3 returns malloced space where header is saved at
 #r3 arg = gecko header type
 #r4 arg = source.s ptr, source.s must end in null byte
-#r5 arg = source.s size (INcluding null byte afterwards)
 mr r3, r24
 mr r4, r27
-mr r5, r28
-bl saveANDstrip_geckoheader
+bl saveANDoverwrite_geckoheader
 mr. r23, r3
 lis r3, asavestripmallocEC@h
 ori r3, r3, asavestripmallocEC@l
@@ -283,20 +275,9 @@ mr r3, r27
 mr r4, r28 #TODO fix me, r28 is incorrect (needs to be decremented) but it actually doesn't matter, func will still work correctly cuz null byte ender. THIS MUST BE fixed in the save and stripper function
 bl source_parser #No error check for this
 
-#NOTE This is important, source_parser allows single enters. Make sure start of file does *NOT* start with enter, if so, we gotta memmove everything backwards by 1 byte
-lbz r0, 0x0 (r27)
-cmpwi r0, 0xA
-bne- I_love_pancakes
-
-mr r3, r27 #Dest/landing spot
-addi r4, r27, 1 #Source, start spot
-mr r5, r28 #Size TODO remember to fix this for above so r28 can be true, this will still work because null byte ender
-bl memmove
-
 #Call custom subfunc to generate a temp code.bin's upper bound size, if gecko code, this will be incremented right before running Waltress
 #r3 = pointer to source.s
 #r3 returns byte size, will never return an error
-I_love_pancakes:
 mr r3, r27
 bl gencodebinsize #TODO in this func add checks for gecko type (and arg) because we need to allocate more shit to memalign if so
 mr r26, r3

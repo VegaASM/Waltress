@@ -10,11 +10,17 @@
 
 .globl get_geckoheadertype
 get_geckoheadertype:
-#Save r3 arg
-mr r4, r3
+#Get thru any possible spaces, tabs, and enters beforehand
+subi r4, r3, 1
+lbzu r0, 0x1 (r4)
+cmpwi r0, 0x20
+beq -0x8
+cmpwi r0, 0x0A
+beq- -0x10
+cmpwi r0, 0x09
+beq- -0x18
 
-#Check for Valid Header
-lbz r0, 0x0 (r3)
+#Went thru all possible junk beforehand, now Check for Valid Header
 cmpwi r0, 0x21 #Check for exclamation point
 li r3, 0 #Raw ASM, no header
 bnelr-
@@ -70,6 +76,3 @@ bdnz+ silly_loop
 #End func, recover r3
 mr r3, r7
 blr
-
-
-

@@ -13,12 +13,13 @@
 
 #include "b/dcbst_file.s"
 #include "b/icbi_file.s"
+#include "b/newline_fixer.s"
 #include "b/get_geckoheadertype.s"
-#include "b/saveANDstrip_geckoheader.s"
+#include "b/saveANDoverwrite_geckoheader.s"
 #include "b/add_header.s"
 
 prompt_message:
-.asciz "Welcome to Waltress! Version 0.6\n\nType a for Assembling, type d for Disassembling. "
+.asciz "Welcome to Waltress! Version 0.6.1\n\nType a for Assembling, type d for Disassembling. "
 
 success_message:
 .asciz "Success!\n\n"
@@ -91,5 +92,3 @@ lwz r0, 0x0024 (sp)
 mtlr r0
 addi sp, sp, 0x0020
 blr
-
-
