@@ -1,6 +1,6 @@
 *WALTRESS*
 
-The first ever PPC Assembler entirely handwritten in PPC! It is 100% Broadway (Wii CPU) compliant. Waltress can also assemble Gecko Codes.
+The first ever PowerPC Assembler entirely handwritten in PowerPC! It is 100% Broadway (Wii CPU) compliant. Waltress can also assemble Gecko Codes.
 
 Why the name Waltress? Waltress is one of Daysha's cats, and she is a shy black+brown long hair cat with a gigantic fluffy tail. Waltress is also the site mascot for MarioKartWii.com.
 
@@ -8,9 +8,9 @@ Please read over this document to understand the contents of some of the folders
 
 Created by Vega
 
-Version 0.6.1
+Version 0.7
 
-Release Date: January 18, 2024
+Release Date: February 14, 2024
 
 ==========
 
@@ -24,9 +24,13 @@ README #What you're reading right now, lol
 
 NOTES.txt #What features and limitations Waltress has. Also contains notes on how to use special formatting/symbols to "tell" Waltress if your source/code is a Gecko code. Be sure to read this! READ THIS!!! READ THIS!!!
 
+BUGS.txt #Any known bugs that have not been fixed yet.
+
 COMPILING.txt #This file contains guides for compiling the HBC app from source, and compiling the Desktop App from source.
 
 DEBUG.txt #This file contains a guide on how to install & run the GNU Debugger to step-by-step the Desktop App if desired.
+
+script.sh #File used for compiling the HBC app from source.
 
 /DV #Desktop application
 
@@ -34,38 +38,39 @@ DEBUG.txt #This file contains a guide on how to install & run the GNU Debugger t
 
 /Engines-Source #The source code for the two main engines which are the "Heart" of Waltress.
 
-/HBC-Waltress-0.6.1 #This folder contains the files for the HBC app. (icon.png, boot,dol. and meta.xml)
+/HBC-Waltress #This folder contains the files for the HBC app. (abin.bin, dbin.bin, icon.png, boot,dol. and meta.xml)
 
 /HBC-Source #Source of the HBC app's boot.dol.
 
 /Examples #Contains various Gecko Code examples so you know exactly how to properly label Gecko codes for Waltress
 
----
+==========
 
 Using Waltress HBC App (real Wii)
 
 Requirements: HBC (version 1.1.0 or later) installed on your Wii and is running on a clean IOS58. 
 
-1. Copy-Paste /HBC-Waltress-0.6.1 folder into the /apps folder of your SD/USB device
-2a: Waltress expects a source.s file present in /apps/HBC-Waltress-0.6.1 for assembling. Place source.s into /apps/HBC-Waltress-0.6 folder
-2b: Waltress expects a code.txt file present in /apps/HBC-Waltress-0.6.1 for disassembling. Place code.txt into /apps/HBC-Waltress-0.6 folder.
-3: Do NOT have both a source.s and code.txt file present in /apps/HBC-Waltress-0.6.1.
+1. Copy-Paste /HBC-Waltress folder into the /apps folder of your SD/USB device
+2a: Waltress expects a source.s file present in /apps/HBC-Waltress for assembling. Place source.s into /apps/HBC-Waltress folder
+2b: Waltress expects a code.txt file present in /apps/HBC-Waltress for disassembling. Place code.txt into /apps/HBC-Waltress folder.
+3: Do NOT have both a source.s and code.txt file present in /apps/HBC-Waltress.
 4: SD/USB device out of computer and into your Wii
 5: Launch HBC. Launch Waltress HBC App. Follow on-screen instructions.
 6: Waltress will display a Success Message or an Error Message after usage.
 
 Using Waltress HBC App (Dolphin)
 
-1. Copy-Paste /HBC-Waltress-0.6.1 folder into the /apps folder of the location of your Virtual SD Card on your computer
-2a: Waltress expects a source.s file present in /apps/HBC-Waltress-0.6.1 for assembling. Place source.s into /apps/HBC-Waltress-0.6 folder
-2b: Waltress expects a code.txt or code.bin file present in /apps/HBC-Waltress-0.6.1 for disassembling. Place code.txt into /apps/HBC-Waltress-0.6.1 folder.
-3: Do NOT have both a source.s and code.txt file present in /apps/HBC-Waltress-0.6.1.
+1. Copy-Paste /HBC-Waltress folder into the /apps folder of the location of your Virtual SD Card on your computer
+2a: Waltress expects a source.s file present in /apps/HBC-Waltress for assembling. Place source.s into /apps/HBC-Waltress folder
+2b: Waltress expects a code.txt or code.bin file present in /apps/HBC-Waltress for disassembling. Place code.txt into /apps/HBC-Waltress folder.
+3: Do NOT have both a source.s and code.txt file present in /apps/HBC-Waltress.
 4: Launch Dolphin. Launch HBC. Launch Waltress HBC App. Follow on-screen instructions.
 5: Waltress will display a Success Message or an Error Message after usage.
+6. Alternatively, you should be able to directly open the boot.dol directly if desired.
 
 Using Waltress Desktop Application (Linux w/ QEMU-PPC)
 
-1. *NOTE* that this has only been confirmed to work on Linux Debian 11. In theory, if you have QEMU-PPC installed on Windows along with a GCC PPC 32-bit Compiler, then you should be able to compile the Source to a Windows-compliant PPC executable. Which can then be launched by QEMU. I do *NOT* own a Windows machine, so I cannot be of help here.
+1. *NOTE* that this has only been confirmed to work on Linux Debian 11. I do *NOT* own a Windows or Mac machine, so I cannot be of help here. If anybody knows how to get this to work on Windows or Mac, please notify me.
 2. Install QEMU-PPC
 sudo apt-get update
 sudo apt-get install qemu-user qemu-user-static

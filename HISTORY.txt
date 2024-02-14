@@ -1,3 +1,8 @@
+2/14/2024 (v0.7): Label Slap
+*Branch Labels (with some restrictions) can now be used during assembling
+*Fixed bug where addis/lis was being disassembled using SIMM instead of UIMM
+*Fixed bug that prevented faulty instruction from being displayed on HBC app error message during assembling
+
 1/18/2024 (v0.6.1): Note that Down
 *Restrictions on location of Comments removed
 *Chain comments (/*example*/) now allowed

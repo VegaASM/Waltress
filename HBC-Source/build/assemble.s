@@ -275,6 +275,12 @@ mr r3, r27
 mr r4, r28 #TODO fix me, r28 is incorrect (needs to be decremented) but it actually doesn't matter, func will still work correctly cuz null byte ender. THIS MUST BE fixed in the save and stripper function
 bl source_parser #No error check for this
 
+#Now remove all branch labels and branch label landing spots
+mr r3, r27
+bl branchlabelparser
+cmpwi r3, 0
+bne- assembleerror #If not 0, r3 will hold memory address to return to main.S to print to console
+
 #Call custom subfunc to generate a temp code.bin's upper bound size, if gecko code, this will be incremented right before running Waltress
 #r3 = pointer to source.s
 #r3 returns byte size, will never return an error
@@ -347,7 +353,7 @@ beq- waltress_loves_us
 cmpwi r3, -3
 beq- waltress_sscanf_failure
 
-#Bad format/paramter error
+#Bad format/parameter error
 mr r3, r22
 crxor 6,6,6
 bl printf #print the culprit

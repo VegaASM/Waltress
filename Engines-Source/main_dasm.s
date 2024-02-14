@@ -2864,7 +2864,7 @@ bne+ check_addmeX
 #addis found (HOWEVER check for lis as well)
 rD r5
 rA r6
-SIMM r7
+UIMM r7 #YES, this is UIMM!!!
 #It's lis if rA = r0. which meeans r6 = 0 from nonloadstore_imm
 cmpwi r6, 0
 bne- not_lis

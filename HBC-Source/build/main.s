@@ -8,7 +8,7 @@
 .LC1:
     .asciz "\x1b[2J" #Reset Cursor, clear current screen contents
 .LC2:
-    .asciz "\n\n       /\\      /\\\n      /  \\____/  \\\n     |            |\n     |  @      @  |\n     |___>_**_<___|\n  _______======_______\n (______        ______)\n        |      |\n        |      |        _\n        |      |_______/ |\n        |      |________/\n       / ______ \\\n      / /      \\ \\\n     /_/        \\_\\\nWelcome to \x1b[43m\x1b[30mWaltress\x1b[40m\x1b[37m! The PPC Assembler that's entirely handwritten in PPC! You can also assemble Gecko Codes! Read the README and NOTES.txt for more info.\n\nPress \x1b[32mA\x1b[37m to Assemble source.s to code.txt. Press \x1b[31mB\x1b[37m to Disassemble code.txt to source.s.\n\nCreated by \x1b[35mVega\x1b[37m. Version: 0.6.1\nPress Home/Start button to exit back to \x1b[36mHBC\x1b[37m at any time. Visit www.MarioKartWii.com for questions or bug reports."
+    .asciz "\n\n       /\\      /\\\n      /  \\____/  \\\n     |            |\n     |  @      @  |\n     |___>_**_<___|\n  _______======_______\n (______        ______)\n        |      |\n        |      |        _\n        |      |_______/ |\n        |      |________/\n       / ______ \\\n      / /      \\ \\\n     /_/        \\_\\\nWelcome to \x1b[43m\x1b[30mWaltress\x1b[40m\x1b[37m! The PPC Assembler that's entirely handwritten in PPC! You can also assemble Gecko Codes! Read the README and NOTES.txt for more info.\n\nPress \x1b[32mA\x1b[37m to Assemble source.s to code.txt. Press \x1b[31mB\x1b[37m to Disassemble code.txt to source.s.\n\nCreated by \x1b[35mVega\x1b[37m. Version: 0.7\nPress Home/Start button to exit back to \x1b[36mHBC\x1b[37m at any time. Visit www.MarioKartWii.com for questions or bug reports."
 .LC3:
     .asciz "\n\n\x1b[32mSUCCESS!\x1b[37m\n\nPress Home/Start button to exit back to \x1b[36mHBC\x1b[37m."
 .LC4:
@@ -122,7 +122,7 @@ main_menu:
 	andis. r0, r31, 0x0040 #Classic B
 	beq+ sync_video
     
-#Start/Home was pressed. Leave to HBC.
+#Start/Home was pressed. Reset console, send leaving message. Leave to HBC.
 leave_hbc:
     lis 3,.LC1@ha
 	la 3,.LC1@l(3)
@@ -137,23 +137,29 @@ leave_hbc:
 
 #A was pressed, assemble!
 init_asm:
+#Reset Cursor again and call assemble
+	lis 3,.LC1@ha
+	la 3,.LC1@l(3)
+	crxor 6,6,6
+	bl printf
     bl assemble
-    cmpwi r3, 0
+    cmpwi r3, 0 #r3 returns address w/ string to print if error
     blt- error_handler
     b success_handler
 	
 #B was pressed, disassemble!
 init_dasm:
-    bl disassemble
-    cmpwi r3, 0
-    blt- error_handler
-    
-#Success Handler, reset console, print success
-success_handler:
-    lis 3,.LC1@ha
+#Reset Cursor again and call disassemble
+	lis 3,.LC1@ha
 	la 3,.LC1@l(3)
 	crxor 6,6,6
 	bl printf
+    bl disassemble
+    cmpwi r3, 0 #r3 returns address w/ string to print if error
+    blt- error_handler
+    
+#Success Handler, print success. console has already been reset
+success_handler:
     lis 3,.LC3@ha
 	la 3,.LC3@l(3)
 	crxor 6,6,6
@@ -181,13 +187,7 @@ custom_wait:
     
 #Error Handler
 error_handler:
-#Save r3, reset cursor, print message
-    mr r31, r3
-	lis 3,.LC1@ha
-	la 3,.LC1@l(3)
-	crxor 6,6,6
-	bl printf
-	mr r3, r31
+#print r3 returned message. console has already been reset
 	crxor 6,6,6
 	bl printf
 	b custom_wait

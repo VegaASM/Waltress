@@ -43,7 +43,7 @@ dfreaddbinbinEC:
 dfclosedbinbinEC:
 .asciz "Error! Can't close dbin.bin.\n\n"
 dfopencodetxtEC:
-.asciz "Error! Can't find code.txt This file needs to be present for assembling. Is the file named incorrectly?\n\n"
+.asciz "Error! Can't find code.txt. This file needs to be present for assembling. Is the file named incorrectly?\n\n"
 dfseekcodetxtEC:
 .asciz "Error! fseek failure on code.txt.\n\n"
 dmemaligncodetxtEC:
@@ -153,12 +153,12 @@ stw r0, 0x2C (r29) #This is a hardcoded offset! If dbinDV.bin engine gets modifi
 #File operation funcs don't update cache for us, we gotta do it
 mr r3, r29
 mr r4, r30
-bl dcbst_file
+bl DCStoreRange
 
 #Finish off cache stuff
 mr r3, r29
 mr r4, r30
-bl icbi_file
+bl ICInvalidateRange
 
 #Open code.txt
 lis r3, codetxt@h

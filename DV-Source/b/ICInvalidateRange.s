@@ -1,6 +1,6 @@
 
-.globl dcbst_file
-dcbst_file:
+.globl ICInvalidateRange
+ICInvalidateRange:
 #Make sure we actually have a size
 cmplwi r4, 0
 blelr-
@@ -15,10 +15,11 @@ addi r4, r4, 0x1F
 srwi r4, r4, 5
 mtctr r4
 
-#DCBST loop
-dcbst_loop:
-dcbst 0, r3
+#ICBI loop
+icbi_loop:
+icbi 0, r3
 addi r3, r3, 0x20
-bdnz+ dcbst_loop
-sync
+bdnz+ icbi_loop
+isync
 blr
+

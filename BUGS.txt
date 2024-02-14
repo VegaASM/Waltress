@@ -1,0 +1,5 @@
+1. If a branch label(s) has multiple landing spots, the most upper landing spot will be used for the SIMM calculation.
+
+2. Mnemonics that are just instruction names only (nop, sc, blr, etc) can have characters appended to them and still assemble. For example "nophdiifrhfuie" will be interpreted by Waltress as "nop" since there's a memcmp function looking for "nop" with a capped count of 3 bytes. Anything appended after the 'p' isn't verified.
+
+3. Instructions that use an insanely high/illegal SIMM (i.e. 0x873493827493274892742) will cause the program to fault.

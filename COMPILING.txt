@@ -2,39 +2,13 @@ How to compile HBC App Source (Linux)
 
 Requirements: You must already have DevkitPPC installed and its environment set.
 
-1. Open a terminal and go to the directory where your PPC Binutils are located. This will be located at /whereyouinstalledDevKit/devkitpro/devkitPPC/bin
-cd /whereyouinstalledDevKit/devkitpro/devkitPPC/bin
+Step 1: Make script.sh executable
+chmod +x ./script.sh
 
-2. Run the following commands in terminal (NOTE there's definitely an easier way to modify the source file(s) to not have all this silly object code stuff, but skill issue you know)
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/main.s -o /path/to/HBC-Source/build/main.o
+Step 2: Execute the script
+./script.sh
 
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/assemble.s -o /path/to/HBC-Source/build/assemble.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/bin2txt.s -o /path/to/HBC-Source/build/bin2txt.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/finalized_assembled_bin.s -o /path/to/HBC-Source/build/finalized_assembled_bin.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/gencodebinsize.s -o /path/to/HBC-Source/build/gencodebinsize.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/source_parser.s -o /path/to/HBC-Source/build/source_parser.o
-
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/add_header.s -o /path/to/HBC-Source/build/add_header.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/get_geckoheadertype.s -o /path/to/HBC-Source/build/get_geckoheadertype.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/saveANDoverwrite_geckoheader.s.s -o /path/to/HBC-Source/build/saveANDoverwrite_geckoheader.s.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/newline_fixer.s -o /path/to/HBC-Source/build/newline_fixer.o
-
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/codetxt2bin.s -o /path/to/HBC-Source/build/codetxt2bin.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/codetxtparser.s -o /path/to/HBC-Source/build/codetxtparser.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/codetxtpostparsersize.s -o /path/to/HBC-Source/build/codetxtpostparsersize.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/disassemble.s -o /path/to/HBC-Source/build/disassemble.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/fixwaltress_nulls.s -o /path/to/HBC-Source/build/fixwaltress_nulls.o
-./powerpc-eabi-as -mregnames -mbroadway /path/to/HBC-Source/build/prep_waltress_dbin.s -o /path/to/HBC-Source/build/prep_waltress_dbin.o
-
-3.At this point all the necessary object files are created. Navigate to the HBC-Source folder and run a make command to finish the build
-cd /path/to/HBC-Source
-make
-
-4. There will be a new HBC-Source.dol and HBC-Source.elf file created in the HBC-Source folder. Delete the .elf file that was generated. Navigate to the Waltress folder (where the pre-compiled HBC app files reside at), and DELETE that boot.dol.
-cd /path/to/Waltress
-rm boot.dol
-
-5. Now rename the HBC-Source.dol to boot.dol. Place the new boot.dol into the Waltress folder.
+Step 3: Delete old boot.dol located at /HBC-Waltress, and replace with new boot.dol that's located at /HBC-Source. Congratz.
 
 ==========
 
@@ -51,7 +25,7 @@ powerpc-linux-gnu-gcc -Wa,-mregnames -ggdb3 -o main -static main.S
 Step 4: Make file executable
 chmod +x ./main
 
-Step 5: Delete pre-compiled main
+Step 5: Delete old main
 cd DV
 rm main
 

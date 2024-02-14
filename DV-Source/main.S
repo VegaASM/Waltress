@@ -1,5 +1,6 @@
 #include "a/assemble.s"
 #include "a/source_parser.s"
+#include "a/branchlabelparser.s"
 #include "a/gencodebinsize.s"
 #include "a/bin2txt.s"
 #include "a/finalized_assembled_bin.s"
@@ -11,21 +12,21 @@
 #include "d/prep_waltress_dbin.s"
 #include "d/fixwaltress_nulls.s"
 
-#include "b/dcbst_file.s"
-#include "b/icbi_file.s"
+#include "b/DCStoreRange.s"
+#include "b/ICInvalidateRange.s"
 #include "b/newline_fixer.s"
 #include "b/get_geckoheadertype.s"
 #include "b/saveANDoverwrite_geckoheader.s"
 #include "b/add_header.s"
 
 prompt_message:
-.asciz "Welcome to Waltress! Version 0.6.1\n\nType a for Assembling, type d for Disassembling. "
+.asciz "Welcome to Waltress! Version 0.7\n\nType a for Assembling, type d for Disassembling. "
 
 success_message:
 .asciz "Success!\n\n"
 
 fgetsEC:
-.asciz "Somehow an fgets error occurred when reading stdin. This should never happen. Please report this Error at MarioKartWii.com!\n\n"
+.asciz "Somehow a fgets error occurred when reading stdin. This should never happen. Please report this Error at MarioKartWii.com!\n\n"
 
 noad:
 .asciz "You've entered an invalid option. Relaunch the program.\n\n"

@@ -1,5 +1,7 @@
 First thing's First. Waltress is an alpha-type program. Meaning it's not ready for "production" usage. Bugs and weird errors will most likely occur. Do not rely on Waltress as your main Gecko Code assembler. If Waltress ever reaches version 1.0.0, then it will be considered ready for production use.
 
+At the moment, the only "nuisance" Waltress possesses is the IMM (Immediate) Value Format rules that must be followed. Be sure to read --IMM-Format-- further below.
+
 ===========
 
 Features~
@@ -17,12 +19,12 @@ Features~
 ============
 
 As mentioned earlier, Waltress is an alpha-type program. Therefore, it does not include some basic features you would expect. Those are...
-- Branch labels not supported
+- Branch labels are indeed supported, but have some restrictions (read -Branch-labels- below)
 - Assembler directives not supported
-- IMM's must follow a certain format (read -IMM-format- below)
-- Register alias's of "sp" and "rtoc" are not supported.
+- Immediate Values must follow a certain format (read -IMM-format- below)
+- Register alias's (i.e. sp, rtoc) not supported.
 
-These may be added/fixed in the future, who knows.
+The above limitations may be fixed in the future, who knows.
 
 Waltress supports all simplified mnemonics except for the following...
 
@@ -83,7 +85,7 @@ IMPORTANT NOTE: Do not place any notes/comments before the Gecko Header.
 
 -IMM-Format-
 
-Waltress does require some strict Formatting in regards to Hex vs Decimal when it comes to IMM (immediate value) usage. Leading zeroes are permitted. 
+Waltress does require some strict Formatting in regards to Hex vs Decimal when it comes to IMM (immediate value) usage. Leading zeroes are allowed. 
 
 All 16-bit IMMs (i.e. SIMM in addi, i.e. UIMM in ori) *must* be in Hex.
 
@@ -103,7 +105,24 @@ All other fields/immediate-values not mentioned above *must* be in Decimal.
 
 =============
 
-NOTE: For the following instructions...
+-Branch-labels-
+
+Branch labels are allowed as long as they meet the following criteria
+
+*Use capital letters, or capital letters w/ underscore(s)
+*No shorter than 3 characters in length
+*No longer than 31 characters in length
+
+Example~
+beq SOMEWHERE
+...
+SOMEWHERE:
+
+There is currently a bug to where if a branch label(s) has multiple landing spots, the most upper landing spot will be used for the branch SIMM calculation. Proper operation would be an outright rejection of assembling the source.s.
+
+=============
+
+NOTE ("noobies" can disregard this note): For the following instructions...
 
 *trap
 *bcX with BO of 0b10100

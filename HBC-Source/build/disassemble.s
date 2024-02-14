@@ -48,7 +48,7 @@ dfreaddbinbinEC:
 dfclosedbinbinEC:
 .asciz "Error! Can't close dbin.bin.\n\n"
 dfopencodetxtEC:
-.asciz "Error! Can't find code.txt This file needs to be present for assembling. Is the file named incorrectly?\n\n"
+.asciz "Error! Can't find code.txt. This file needs to be present for assembling. Is the file named incorrectly?\n\n"
 dfseekcodetxtEC:
 .asciz "Error! fseek failure on code.txt.\n\n"
 dmemaligncodetxtEC:
