@@ -5,19 +5,21 @@
 
 #This gets immediately called AFTER source.s parser
 no_landing_spot_text:
-.asciz "Error! At least 1 branch label doesn't have a landing spot.\n\n"
+.asciz "\n\nError! The above instruction's branch label doesn't have a landing spot.\n\n"
 too_small_text:
-.asciz "Error! At least 1 branch label is not at least 3 characters in length.\n\n"
+.asciz "\n\nError! The above instruction's branch label is not at least 3 characters in length.\n\n"
 too_much_text:
-.asciz "Error! At least 1 branch label exceeds 31 characters in length.\n\n"
+.asciz "\n\nError! The above instruction's branch label exceeds 31 characters in length.\n\n"
 invalid_char_text:
-.asciz "Error! At least 1 branch label uses an invalid character.\n\n"
+.asciz "\n\nError! The above instruction's branch label uses an invalid character.\n\n"
 too_far_jump_condi_text:
-.asciz "Error! At least 1 branch label for a conditional branch has a jump that exceeds 0x7FFC.\n\n"
+.asciz "\n\nError! The above instruction's branch label (conditional) has a jump that exceeds 0x7FFC.\n\n"
 too_far_jump_uncondi_text:
-.asciz "Error! At least 1 branch label for an unconditional branch has a jump that exceeds 0x01FFFFFC.\n\n"
+.asciz "\n\nError! The above instruction's branch label (unconditional) has a jump that exceeds 0x01FFFFFC.\n\n"
+duplicate_spots:
+.asciz "\n\nError! The above instruction's branch label has at least 2 different landing spots.\n\n"
 malloc_text:
-.asciz "Error! For whatever reason, memory couldn't be allocated when needing to expand source.s due to a label-to-simm conversion.\n\n"
+.asciz "\n\nError! For whatever reason, memory couldn't be allocated when needing to expand source.s due to a label-to-simm conversion.\n\n"
 .align 2
 
 .globl branchlabelparser
@@ -110,6 +112,10 @@ condibranch:
 addi r30, r30, 1
 condibranch_loop:
 lbzu r0, 0x1 (r30)
+cmpwi r0, 0 
+beq- erase_landing_spots
+cmpwi r0, 0xA
+beq- ROOTLOOP
 cmpwi r0, 0x30 #check for 0 out of possible 0x
 bne- 0x10
 lbz r0, 0x1 (r30)
@@ -173,8 +179,24 @@ lbzx r0, r27, r28
 cmpwi r0, colon
 bne- compare_labels
 
+#Now search rest of file if 2nd+ landing spot exist which it shouldn't
+make_sure_no_duplicate_landing_spot_exists:
+mr r26, r27
+make_sure_no_duplicate_landing_spot_exists_LOOP:
+lbzu r0, 0x1 (r26)
+cmpwi r0, 0
+beq- found_it_for_sure
+mr r3, r27
+mr r4, r26
+addi r5, r28, 1 #Include the colon in count
+bl memcmp
+cmpwi r3, 0
+beq- duplicate_error
+b make_sure_no_duplicate_landing_spot_exists_LOOP
+
 #Now we've found it!
 #Make copy of r30 & r27
+found_it_for_sure:
 mr r3, r30
 mr r4, r27
 
@@ -190,7 +212,7 @@ xor r4, r4, r3
 xor r3, r3, r4
 
 #Count amount of 0xA's (enter's) in between the labels
-addi r3, r3, -1
+subi r3, r3, 1
 li r5, 0
 lbzu r0, 0x1 (r3)
 cmpw r3, r4
@@ -225,7 +247,7 @@ beq- do_simm_write
 
 #At this point no matter what, we need to know the current length of source.s (INcluding null byte)
 #NOTE Keep cr0 & r3 intact!
-addi r4, r31, -1
+subi r4, r31, 1
 lbzu r0, 0x1 (r4)
 cmpwi cr7, r0, 0
 bne+ cr7, -0x8
@@ -271,43 +293,109 @@ bl memmove
 #No expanding nor contracting needed, just plug in SIMM ascii!
 do_simm_write:
 #Transfer from stack buffer to source.s
-li r0, 10
-addi r3, sp, 7
+li r0, 5
+addi r3, sp, 6
 mtctr r0
-subi r4, r30, 1
-lbzu r0, 0x1 (r3)
-stbu r0, 0x1 (r4)
+subi r4, r30, 2
+lhzu r0, 0x2 (r3)
+sthu r0, 0x2 (r4)
 bdnz+ -0x8
 
 #Sweet! We did it. Move onto next possible branch label
 b ROOTLOOP
 
+#A branch label has 2 more more landing spots
+duplicate_error:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Return error string to Parent
+lis r3, duplicate_spots@h
+ori r3, r3, duplicate_spots@l
+b branchlabelepilogue
+
 #A branch label's landing spot is missing
 missing_landing_spot:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Return error string to Parent
 lis r3, no_landing_spot_text@h
 ori r3, r3, no_landing_spot_text@l
 b branchlabelepilogue
 
 #Branch min violation
 too_short:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Return error string to Parent
 lis r3, too_small_text@h
 ori r3, r3, too_small_text@l
 b branchlabelepilogue
 
 #Branch max violation
 too_long:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Return error string to Parent
 lis r3, too_much_text@h
 ori r3, r3, too_much_text@l
 b branchlabelepilogue
 
 #Branch invalid char violation
 invalid_branch_char:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Return error string to Parent
 lis r3, invalid_char_text@h
 ori r3, r3, invalid_char_text@l
 b branchlabelepilogue
 
 #Bad SIMM
 exceed_simm:
+#Null out enter AFTER branch label
+mr r3, r30
+bl null_post_enter
+#Move cursor to previous enter or SoF-1 (start of file minus 1)
+mr r3, r30
+bl move_cursor_back
+#Print the culprit
+crxor 6, 6, 6
+bl printf
+#Depending on SIMM used, send appropriate error message back to parent
 cmpwi r29, 0x7FFC
 bne- 0x10
 lis r3, too_far_jump_condi_text@h
@@ -369,7 +457,7 @@ cmpwi r0, 0xA
 bne+ actually_done_lol
 
 #Get null byte ptr; so hacky we need to fix all of this in the future lol
-addi r5, r31, -1
+subi r5, r31, 1
 lbzu r0, 0x1 (r5)
 cmpwi r0, 0
 bne+ -0x8
@@ -426,4 +514,21 @@ stbu r7, 0x1 (r4)
 #Decrement loop
 bdnz+ hex2asciiBParser_loop
 #End func
+blr
+
+null_post_enter:
+lbzu r0, 0x1 (r3)
+cmpwi r0, 0xA
+bne+ -0x8
+li r0, 0
+stb r0, 0 (r3)
+blr
+
+move_cursor_back:
+lbzu r0, -0x1 (r3)
+cmplw r3, r31
+blt- 0xC
+cmpwi r0, 0xA
+bne+ -0x10
+addi r3, r3, 1
 blr

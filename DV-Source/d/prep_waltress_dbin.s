@@ -5,7 +5,7 @@
 
 #Func returns
 #r3 = new code.bin pointer
-#r4 = loop/instruction amount for waltress dbin
+#r4 = loop/instruction amount for waltress dasm engine
 
 #(code.txt post excluding null byte parsed size / 2) = code.bin size
 #code.bin size / 4 = Amount of Instruction

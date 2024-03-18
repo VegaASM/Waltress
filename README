@@ -1,6 +1,6 @@
 *WALTRESS*
 
-The first ever PowerPC Assembler entirely handwritten in PowerPC! It is 100% Broadway (Wii CPU) compliant. Waltress can also assemble Gecko Codes.
+The first ever PowerPC Assembler entirely handwritten in PowerPC! It is 100% Broadway (Wii CPU) compliant. Waltress can also assemble Wii Gecko Codes.
 
 Why the name Waltress? Waltress is one of Daysha's cats, and she is a shy black+brown long hair cat with a gigantic fluffy tail. Waltress is also the site mascot for MarioKartWii.com.
 
@@ -8,9 +8,9 @@ Please read over this document to understand the contents of some of the folders
 
 Created by Vega
 
-Version 0.7
+Version 0.8
 
-Release Date: February 14, 2024
+Release Date: March 18, 2024
 
 ==========
 
@@ -24,7 +24,7 @@ README #What you're reading right now, lol
 
 NOTES.txt #What features and limitations Waltress has. Also contains notes on how to use special formatting/symbols to "tell" Waltress if your source/code is a Gecko code. Be sure to read this! READ THIS!!! READ THIS!!!
 
-BUGS.txt #Any known bugs that have not been fixed yet.
+BUGS.txt #Any known bugs that have not been fixed yet. Read this before reporting a bug if you've encounter one.
 
 COMPILING.txt #This file contains guides for compiling the HBC app from source, and compiling the Desktop App from source.
 
@@ -32,17 +32,17 @@ DEBUG.txt #This file contains a guide on how to install & run the GNU Debugger t
 
 script.sh #File used for compiling the HBC app from source.
 
+tester_source.s #This is a source file (contains every PPC instruction) which is used during debugging to verify that Assembling and Disassembling outputs are 100% correct
+
 /DV #Desktop application
 
-/DV-Source #Source of the Desktop application excluding the Engine files
+/DV-Source #Source of the Desktop application
 
-/Engines-Source #The source code for the two main engines which are the "Heart" of Waltress.
-
-/HBC-Waltress #This folder contains the files for the HBC app. (abin.bin, dbin.bin, icon.png, boot,dol. and meta.xml)
+/HBC-Waltress #This folder contains the files for the HBC app. (icon.png, boot,dol. and meta.xml)
 
 /HBC-Source #Source of the HBC app's boot.dol.
 
-/Examples #Contains various Gecko Code examples so you know exactly how to properly label Gecko codes for Waltress
+/Examples #Contains various Wii Gecko Code examples so you know exactly how to properly label Gecko codes for Waltress
 
 ==========
 
@@ -70,7 +70,7 @@ Using Waltress HBC App (Dolphin)
 
 Using Waltress Desktop Application (Linux w/ QEMU-PPC)
 
-1. *NOTE* that this has only been confirmed to work on Linux Debian 11. I do *NOT* own a Windows or Mac machine, so I cannot be of help here. If anybody knows how to get this to work on Windows or Mac, please notify me.
+1. *NOTE* that this has only been confirmed to work on Linux Debian 11 & 12. I do *NOT* own a Windows or Mac machine, so I cannot be of help here. If anybody knows how to get this to work on Windows or Mac, please notify me.
 2. Install QEMU-PPC
 sudo apt-get update
 sudo apt-get install qemu-user qemu-user-static
@@ -82,5 +82,5 @@ chmod +x ./main
 5: Do NOT have both a source.s and code.txt file present in /DV.
 6. Launch the App
 ./main
-7. Follow the on screen instructions.
+7. Follow the on-screen instructions.
 8: Waltress will display a Success Message or an Error Message after usage.

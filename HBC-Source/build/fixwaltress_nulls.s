@@ -10,11 +10,9 @@
 
 #TODO maybe write in code to check if r4 = 1 then simply blr back!
 
-.set enter, 0x0A
-
 .globl fixwaltress_nulls
 fixwaltress_nulls:
-li r5, enter
+li r5, 0xA
 li r6, 0
 mtctr r4
 
@@ -32,4 +30,3 @@ bdnz+ fixwaltress_nulls_loop
 li r0, 0 #Store final final null byte, overwrites most recent newly written 0xA ofc. *NOTE* this is important as it ensures final string is terminated, sanity for overflow
 stb r0, 0 (r3)
 blr
-

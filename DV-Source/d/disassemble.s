@@ -11,8 +11,8 @@
 #Create source.s, write to it, close, success
 
 #r31 = fp, then source.s pointer
-#r30 = dbin.bin size
-#r29 = dbin.bin pointer
+#VOID NOW r30 = dbin.bin size
+#VOID NOW r29 = dbin.bin pointer
 #r28 = code.txt size
 #r27 = code.txt pointer
 #r26 = Header flag, 0 = raw, 1 = 04,06,C2, 2 = C0
@@ -20,8 +20,6 @@
 #r22 = r31 (net; factoring in gecko header)
 
 #Directives
-dbin:
-.asciz "dbin.bin"
 sources:
 .asciz "source.s"
 codetxt:
@@ -31,45 +29,35 @@ rb:
 wb:
 .asciz "wb"
 dfopensourceEC:
-.asciz "Error! Source.s already exists. Delete it and try again.\n\n"
-dfopendbinbinEC:
-.asciz "Error! Unable to open dbin.bin. Did you accidentally delete it?\n\n"
-dfseekdbinbinEC:
-.asciz "Error! fseek failure on dbin.bin.\n\n"
-dmemaligndbinbinEC:
-.asciz "Error! Can't allocate memory for dbin.bin.\n\n"
-dfreaddbinbinEC:
-.asciz "Error! Unable to dump dbin.bin to memory.\n\n"
-dfclosedbinbinEC:
-.asciz "Error! Can't close dbin.bin.\n\n"
+.asciz "\n\nError! Source.s already exists. Delete it and try again.\n\n"
 dfopencodetxtEC:
-.asciz "Error! Can't find code.txt. This file needs to be present for assembling. Is the file named incorrectly?\n\n"
+.asciz "\n\nError! Can't find code.txt. This file needs to be present for disassembling. Is the file named incorrectly?\n\n"
 dfseekcodetxtEC:
-.asciz "Error! fseek failure on code.txt.\n\n"
+.asciz "\n\nError! fseek failure on code.txt.\n\n"
 dmemaligncodetxtEC:
-.asciz "Error! Can't allocate memory for code.txt.\n\n"
+.asciz "\n\nError! Can't allocate memory for code.txt.\n\n"
 dfreadcodetxtEC:
-.asciz "Error! Unable to dump code.txt to memory.\n\n"
+.asciz "\n\nError! Unable to dump code.txt to memory.\n\n"
 dfclosecodetxtEC:
-.asciz "Error! Can't close code.txt.\n\n"
+.asciz "\n\nError! Can't close code.txt.\n\n"
 dgeckoheaderEC:
-.asciz "Error! The Gecko Header is not the correct format or an unsupported Header type is being used.\n\n"
+.asciz "\n\nError! The Gecko Header is not the correct format or an unsupported Header type is being used.\n\n"
 dsavestripmallocEC:
-.asciz "Error! Can't allocate memory within the Save and Strip Gecko Header subroutine.\n\n"
+.asciz "\n\nError! Can't allocate memory within the Save and Strip Gecko Header subroutine.\n\n"
 dcodetxt2binEC:
-.asciz "Error! Either a sscanf failure occurred within the codetxt2bin subroutine, or somehow code.txt (after the codetxtpostparsersize subroutine) has a size that isn't divisible by 4. Please report this Error at MarioKartWii.com!\n\n"
+.asciz "\n\nError! Either a sscanf failure occurred within the codetxt2bin subroutine, or somehow code.txt (after the codetxtpostparsersize subroutine) has a size that isn't divisible by 4. Please report this Error at MarioKartWii.com!\n\n"
 dmemalignTOBEsourceEC:
-.asciz "Error! Can't allocate memory for future source.s.\n\n"
+.asciz "\n\nError! Can't allocate memory for future source.s.\n\n"
 dprepwaltressdbinEC:
-.asciz "Error! One the following scenarios has occurred. The 06 line amount designator byte is an incorrect value, the C0 line amount designator byte is an incorrect value, or the C2 line amount designator byte is an incorrect value.\n\n"
+.asciz "\n\nError! One the following scenarios has occurred. The 06 line amount designator byte is an incorrect value, the C0 line amount designator byte is an incorrect value, or the C2 line amount designator byte is an incorrect value.\n\n"
 dwaltressSprintfFailureEC:
-.asciz "Error! A sprintf failure occurred when Waltress tried disassembling one of the instruction(s). This should never occur. Please report this Error at MarioKartWii.com!\n\n"
+.asciz "\n\nError! A sprintf failure occurred when Waltress tried disassembling one of the instruction(s). This should never occur. Please report this Error at MarioKartWii.com!\n\n"
 dfcreatesourceEC:
-.asciz "Error! Can't create new source.s. If you are using the Desktop Version, make sure the DV folder has user permissions enabled.\n\n"
+.asciz "\n\nError! Can't create new source.s. If you are using the Desktop Version, make sure the DV folder has user permissions enabled.\n\n"
 dfwritesourceEC:
-.asciz "Error! Can't write content to newly created source.s.\n\n"
+.asciz "\n\nError! Can't write content to newly created source.s.\n\n"
 dfclosesourceEC:
-.asciz "Error! Can't close new source.s.\n\n"
+.asciz "\n\nError! Can't close new source.s.\n\n"
 
 .align 2
 
@@ -91,74 +79,6 @@ cmpwi r3, 0
 lis r3, dfopensourceEC@h
 ori r3, r3, dfopensourceEC@l
 bne- disassemble_error #YES this is bne! We don't want file to exist
-
-#Open dbin.bin
-lis r3, dbin@h
-lis r4, rb@h
-ori r3, r3, dbin@l
-ori r4, r4, rb@l
-bl fopen
-mr. r31, r3
-lis r3, dfopendbinbinEC@h
-ori r3, r3, dfopendbinbinEC@l
-beq- disassemble_error
-
-#Get size of dbin.bin
-mr r3, r31
-li r4, 0
-li r5, 2
-bl fseek
-cmpwi r3, 0
-lis r3, dfseekdbinbinEC@h
-ori r3, r3, dfseekdbinbinEC@l
-bne- disassemble_error
-mr r3, r31
-bl ftell #No error check for this
-
-#Rewind file stream position
-#Allocate mem for dbin.bin
-mr r30, r3
-mr r3, r31
-bl rewind #No error check for this
-li r3, 32
-mr r4, r30
-bl memalign
-mr. r29, r3
-lis r3, dmemaligndbinbinEC@h
-ori r3, r3, dmemaligndbinbinEC@l
-beq- disassemble_error
-
-#Dump dbin.bin, close
-mr r3, r29
-li r4, 1
-mr r5, r30 #count (this is real size)
-mr r6, r31
-bl fread
-cmpw r3, r30
-lis r3, dfreaddbinbinEC@h
-ori r3, r3, dfreaddbinbinEC@l
-bne- disassemble_error
-mr r3, r31
-bl fclose
-cmpwi r3, 0
-lis r3, dfclosedbinbinEC@h
-ori r3, r3, dfclosedbinbinEC@l
-bne- disassemble_error
-
-#Software is required to write in the sprintf address to the Waltress ASM engine
-lis r0, sprintf@h
-ori r0, r0, sprintf@l
-stw r0, 0x2C (r29) #This is a hardcoded offset! If dbinDV.bin engine gets modified, remember to adjust this!
-
-#File operation funcs don't update cache for us, we gotta do it
-mr r3, r29
-mr r4, r30
-bl DCStoreRange
-
-#Finish off cache stuff
-mr r3, r29
-mr r4, r30
-bl ICInvalidateRange
 
 #Open code.txt
 lis r3, codetxt@h
@@ -316,8 +236,7 @@ mr r23, r31 #Make copy of source.s pointer
 run_waltress_dbin_bin:
 lwzu r4, 0x4 (r24)
 mr r3, r23
-mtlr r29
-blrl # :)
+bl dasm_engine # :)
 cmpwi r3, 0
 beq+ its_the_waltress
 

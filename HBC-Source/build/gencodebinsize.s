@@ -19,4 +19,3 @@ cmpwi r0, 0xA
 bne+ gencodebinsizeloop
 addi r3, r3, 4
 b gencodebinsizeloop
-

@@ -1,3 +1,12 @@
+3/18/2024 (v0.8): Somewhat Useful Now
+*Engine files are now standard functions within Source. This prevents faults occurring on certain versions of QEMU
+*Some Immediate Value restrictions have been lifted (i.e. can use decimal values for SIMMs/UIMMs of integer instructions, can use negative hex values for most instructions, etc)
+*Added in subi, subis, and subic(.) simplified mnemonics. Somehow I forgot those? lol
+*Fixed Bug that allowed multiple branch landings spots to have the same name
+*Fixed Bug that allowed name-only instructions to have junk appended to it and still be assembled (i.e nopxxxxx being read as nop)
+*Fixed Bug that used SIMM range instead of UIMM range for addis when assembling
+*Placed in a function to check if any IMM exceeds 8 digits in net width. Therefore an Error Message will be displayed (that shows the faulty instruction) instead of a fault occurring.
+
 2/14/2024 (v0.7): Label Slap
 *Branch Labels (with some restrictions) can now be used during assembling
 *Fixed bug where addis/lis was being disassembled using SIMM instead of UIMM
@@ -25,7 +34,7 @@
 *Can now disassemble Gecko Cheat Codes. New secondary menu within App allows users to choose the disassembly option.
 
 7/26/2022 (v0.4): Hey, it's a Gecko!
-*Can now assemble Gecko Cheat Codes. However, proper disassembling is not supported (example: a Gecko Opcode present at the start of code.bin/txt will be diassembled to its PPC instruction equivalent). Therefore, Waltress can still only disassemble in a 'raw style'. Raw assembling still available.
+*Can now assemble Gecko Cheat Codes. However, proper disassembling is not supported (example: a Gecko Opcode present at the start of code.bin/txt will be disassembled to its PPC instruction equivalent). Therefore, Waltress can still only disassemble in a 'raw style'. Raw assembling still available.
 *Gecko Cheat Codes supported (for assembling) are Mem80 32-bit RAM Write (04 Opcode), Mem80 String Write (06 Opcode), Execute ASM (C0 Opcode), and Insert ASM (C2 Opcode).
 *C0 assembling will auto add required blr for you. No need to include it in your source.s file.
 

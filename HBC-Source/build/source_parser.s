@@ -14,6 +14,12 @@
 #r3 = pointer to source.s that ends in Enter then Null
 #r4 = byte size *plus* null
 
+#TODO show condi branch in puts message
+
+wtf_lmao: #TODO remove this error line/check from the branch label parser since its here
+.asciz "\n\nError! At least 1 branch label does not have a landing spot."
+.align 2
+
 #Symbols
 .set space, 0x20
 .set enter, 0x0A
@@ -25,11 +31,15 @@
 #Prologue
 .globl source_parser
 source_parser:
-stwu sp, -0x0010 (sp)
+stwu sp, -0x0020 (sp)
 mflr r0
-stw r30, 0x8 (sp)
-stw r31, 0xC (sp)
-stw r0, 0x0014 (sp)
+stw r26, 0x8 (sp)
+stw r27, 0xC (sp)
+stw r28, 0x10 (sp)
+stw r29, 0x14 (sp)
+stw r30, 0x18 (sp)
+stw r31, 0x1C (sp)
+stw r0, 0x0024 (sp)
 
 #Save Args
 mr r31, r3
@@ -110,6 +120,8 @@ bne- start_standard_parser
 li r0, space
 stb r0, 0x0 (r31)
 
+#####################
+#####################
 #Set counter to know how much to subtract from r30 which will be used as setup for memmove r4 arg
 start_standard_parser:
 li r6, 0
@@ -142,11 +154,22 @@ li r6, 0 #Reset r6
 subi r31, r31, 1 #Update cursor to correct spot now that contents have shifted left 1 byte
 b standard_parser_loop
 
+wtf_lol:
+lis r3, wtf_lmao@h
+ori r3, r3, wtf_lmao@l
+b source_parser_further_epilogue
+
 #Epilogue
 source_parser_epilogue:
-lwz r30, 0x8 (sp)
-lwz r31, 0xC (sp)
-lwz r0, 0x0014 (sp)
+li r3, 0
+source_parser_further_epilogue:
+lwz r31, 0x1C (sp)
+lwz r30, 0x18 (sp)
+lwz r29, 0x14 (sp)
+lwz r28, 0x10 (sp)
+lwz r27, 0xC (sp)
+lwz r26, 0x8 (sp)
+lwz r0, 0x0024 (sp)
 mtlr r0
-addi sp, sp, 0x0010
+addi sp, sp, 0x0020
 blr

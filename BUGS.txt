@@ -1,5 +1,3 @@
-1. If a branch label(s) has multiple landing spots, the most upper landing spot will be used for the SIMM calculation.
-
-2. Mnemonics that are just instruction names only (nop, sc, blr, etc) can have characters appended to them and still assemble. For example "nophdiifrhfuie" will be interpreted by Waltress as "nop" since there's a memcmp function looking for "nop" with a capped count of 3 bytes. Anything appended after the 'p' isn't verified.
-
-3. Instructions that use an insanely high/illegal SIMM (i.e. 0x873493827493274892742) will cause the program to fault.
+Bug003: The very first instruction of any source *CANNOT* be a branch that uses a branch label. Its label will not be converted to a SIMM. Then Waltress will try to assemble the branch instruction as a regular instruction, which will result in a sscanf failure (invalid instruction).
+Bug004: The checks to make sure Branch Labels use Capital Letters and/or Underscores fails. Then Waltress will try to assemble the branch instruction as a regular instruction, which will result in a sscanf failure (invalid instruction).
+Bug007: Branch SIMMs must be in unsigned form or else certain conditional branches will have the wrong bit hint value assembled.

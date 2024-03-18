@@ -11,15 +11,13 @@
 #Create code.text, write to it, close, success
 
 #r31 = fd, then code.txt pointer
-#r30 = abin.bin size
-#r29 = abin.bin pointer
+#VOID NOW r30 = abin.bin size
+#VOID NOW r29 = abin.bin pointer
 #r28 = sourse.s size
 #r27 = sourse.s pointer
 #r26 = C2, C0, 04, 06, RAW flag
 
 #Directives
-abin:
-.asciz "abin.bin"
 asources:
 .asciz "source.s"
 acodetxt:
@@ -29,45 +27,35 @@ arb:
 awb:
 .asciz "wb"
 afopencodetxtEC:
-.asciz "Error! Code.txt already exists. Delete it and try again.\n\n"
-afopenabinbinEC:
-.asciz "Error! Unable to open abin.bin. Did you accidentally delete it?\n\n"
-afseekabinbinEC:
-.asciz "Error! fseek failure on abin.bin.\n\n"
-amemalignabinbinEC:
-.asciz "Error! Can't allocate memory for abin.bin.\n\n"
-afreadabinbinEC:
-.asciz "Error! Unable to dump abin.bin to memory.\n\n"
-afcloseabinbinEC:
-.asciz "Error! Can't close abin.bin.\n\n"
+.asciz "\n\nError! Code.txt already exists. Delete it and try again.\n\n"
 afopensourceEC:
-.asciz "Error! Can't find source.s. This file needs to be present for assembling. Is the file named incorrectly?\n\n"
+.asciz "\n\nError! Can't find source.s. This file needs to be present for assembling. Is the file named incorrectly?\n\n"
 afseeksourceEC:
-.asciz "Error! fseek failure on source.s.\n\n"
+.asciz "\n\nError! fseek failure on source.s.\n\n"
 amemalignsourceEC:
-.asciz "Error! Can't allocate memory for source.s.\n\n"
+.asciz "\n\nError! Can't allocate memory for source.s.\n\n"
 afreadsourceEC:
-.asciz "Error! Unable to dump source.s to memory.\n\n"
+.asciz "\n\nError! Unable to dump source.s to memory.\n\n"
 afclosesourceEC:
-.asciz "Error! Can't close source.s.\n\n"
+.asciz "\n\nError! Can't close source.s.\n\n"
 ageckoheaderEC:
-.asciz "Error! The Gecko Header is not the correct format or an unsupported Header type is being used.\n\n"
+.asciz "\n\nError! The Gecko Header is not the correct format or an unsupported Header type is being used.\n\n"
 asavestripmallocEC:
-.asciz "Error! Can't allocate memory within the Save and Strip Gecko Header subroutine.\n\n"
+.asciz "\n\nError! Can't allocate memory within the Save and Strip Gecko Header subroutine.\n\n"
 amemalignTOBEcodebinEC:
-.asciz "Error! Can't allocate memory for temporary code.bin.\n\n"
+.asciz "\n\nError! Can't allocate memory for temporary code.bin.\n\n"
 awaltressSscanfFailureEC:
 .asciz "\n\nError! A sscanf failure occurred when Waltress tried assembling the above instruction. Please note that all spaces are stripped out, this is normal. Did you typo the instruction name? Did you forget a comma? Did you forget to prepend a Hex value with 0x? Did you forget to prepend a GPR with the letter r? Did you forget to prepend a FPR with the letter f? If the above instruction is andi/andis, did you forget to add a period after the instruction name?\n\n"
 awaltressBadParamEC:
 .asciz "\n\nError! The above instruction was interpreted by Waltress to be valid, but an invalid parameter (register value, imm value, etc) was used. Please note that all spaces are stripped out, this is normal. Did you exceed the SIMM-16 range? Did you exceed the UIMM-16 range? Are you following the IMM Format rules? Did you exceed the SIMM-12 range for a psq load/store? Are you using a crF number higher than 7?\n\n"
 amemaligncodetxtEC:
-.asciz "Error! Can't allocate memory for code.txt.\n\n"
+.asciz "\n\nError! Can't allocate memory for code.txt.\n\n"
 afcreatecodetxtEC:
-.asciz "Error! Can't create new code.txt. If you are using the Desktop Version, make sure the DV folder has user permissions enabled.\n\n"
+.asciz "\n\nError! Can't create new code.txt. If you are using the Desktop Version, make sure the DV folder has user permissions enabled.\n\n"
 afwritecodetxtEC:
-.asciz "Error! Can't write content to newly created code.txt.\n\n"
+.asciz "\n\nError! Can't write content to newly created code.txt.\n\n"
 afclosecodetxtEC:
-.asciz "Error! Can't close new code.txt.\n\n"
+.asciz "\n\nError! Can't close new code.txt.\n\n"
 
 .align 2
 
@@ -98,77 +86,6 @@ cmpwi r3, 0
 lis r3, afopencodetxtEC@h
 ori r3, r3, afopencodetxtEC@l
 bne- assembleerror #YES this is bne! We don't want file to exist
-
-#Open abin.bin
-lis r3, abin@h
-lis r4, arb@h
-ori r3, r3, abin@l
-ori r4, r4, arb@l
-bl fopen
-mr. r31, r3
-lis r3, afopenabinbinEC@h
-ori r3, r3, afopenabinbinEC@l
-beq- assembleerror
-
-#Get size of abin.bin
-mr r3, r31
-li r4, 0
-li r5, 2
-bl fseek
-cmpwi r3, 0
-lis r3, afseekabinbinEC@h
-ori r3, r3, afseekabinbinEC@l
-bne- assembleerror
-mr r3, r31
-bl ftell #No error check for this
-
-#Rewind file stream position
-#Allocate mem for abin.bin
-mr r30, r3
-mr r3, r31
-bl rewind #No error check for this
-li r3, 32
-mr r4, r30
-bl memalign
-mr. r29, r3
-lis r3, amemalignabinbinEC@h
-ori r3, r3, amemalignabinbinEC@l
-beq- assembleerror
-
-#Dump abin.bin, close
-mr r3, r29
-li r4, 1
-mr r5, r30 #count (this is real size)
-mr r6, r31
-bl fread
-cmpw r3, r30
-lis r3, afreadabinbinEC@h
-ori r3, r3, afreadabinbinEC@l
-bne- assembleerror
-mr r3, r31
-bl fclose
-cmpwi r3, 0
-lis r3, afcloseabinbinEC@h
-ori r3, r3, afcloseabinbinEC@l
-bne- assembleerror
-
-#Software is required to write in the sscanf, and memcmp func address's to the Waltress ASM engine
-lis r0, sscanf@h
-lis r3, memcmp@h
-ori r0, r0, sscanf@l
-ori r3, r3, memcmp@l
-stw r0, 0x2E0 (r29) #This is a hardcoded offset! If abinDV.bin engine gets modified, remember to adjust this!
-stw r3, 0x2E4 (r29) #This is a hardcoded offset! If abinDV.bin engine gets modified, remember to adjust this!
-
-#File operation funcs don't update cache for us, we gotta do it
-mr r3, r29
-mr r4, r30
-bl DCStoreRange
-
-#Finish off cache stuff
-mr r3, r29
-mr r4, r30
-bl ICInvalidateRange
 
 #Open source.s
 lis r3, asources@h
@@ -269,6 +186,20 @@ skipstrip:
 mr r3, r27
 mr r4, r28 #TODO fix me, r28 is incorrect (needs to be decremented) but it actually doesn't matter, func will still work correctly cuz null byte ender. THIS MUST BE fixed in the save and stripper function
 bl source_parser #No error check for this
+cmpwi r3, 0
+bne- assembleerror #If not 0, r3 will hold memory address to return to main.S to print to console
+
+#Check all SIMM lengths/widths
+mr r3, r27
+bl simm_length_checker
+cmpwi r3, 0
+bne- assembleerror #If not 0, r3 will hold memory address to return to main.S to print to console
+
+#Now change all negative hex SIMMs to their unsigned equivalents
+mr r3, r27
+bl fix_neg_hex
+cmpwi r3, 0
+bne- assembleerror #If not 0, r3 will hold memory address to return to main.S to print to console
 
 #Now remove all branch labels and branch label landing spots
 mr r3, r27
@@ -340,8 +271,7 @@ mr r27, r5
 #RUN WALTRESS ASM (abin.bin) ENGINE
 #r27 = r3 = source.s line input addr (must end in null)
 #r31 = r4 = code.bin*** output addr (where binary assembled instruction gets written at)
-mtlr r29
-blrl # :)
+bl asm_engine # :)
 cmpwi r3, 0
 beq- waltress_loves_us
 
@@ -360,7 +290,7 @@ b assembleerror
 waltress_sscanf_failure:
 mr r3, r22
 crxor 6,6,6
-bl printf #print the culprit
+bl printf #print the culprit, DON'T use puts
 lis r3, awaltressSscanfFailureEC@h  #Set new string for next printf
 ori r3, r3, awaltressSscanfFailureEC@l
 b assembleerror

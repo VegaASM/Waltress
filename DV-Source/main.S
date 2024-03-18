@@ -1,15 +1,19 @@
 #include "a/assemble.s"
 #include "a/source_parser.s"
+#include "a/simm_length_checker.s"
+#include "a/fix_neg_hex.s"
 #include "a/branchlabelparser.s"
 #include "a/gencodebinsize.s"
+#include "a/asm_engine.s"
 #include "a/bin2txt.s"
-#include "a/finalized_assembled_bin.s"
+#include "a/finalize_assembled_bin.s"
 
 #include "d/disassemble.s"
 #include "d/codetxtparser.s"
 #include "d/codetxtpostparsersize.s"
 #include "d/codetxt2bin.s"
 #include "d/prep_waltress_dbin.s"
+#include "d/dasm_engine.s"
 #include "d/fixwaltress_nulls.s"
 
 #include "b/DCStoreRange.s"
@@ -20,7 +24,7 @@
 #include "b/add_header.s"
 
 prompt_message:
-.asciz "Welcome to Waltress! Version 0.7\n\nType a for Assembling, type d for Disassembling. "
+.asciz "Welcome to Waltress! Version 0.8\n\nCreated by Vega\n\nType a for Assembling, type d for Disassembling. "
 
 success_message:
 .asciz "Success!\n\n"
@@ -43,8 +47,7 @@ lis r3, prompt_message@h
 mflr r0
 ori r3, r3, prompt_message@l
 stw r0, 0x0024 (sp)
-crxor 6,6,6
-bl printf
+bl puts
 
 #Call fgets and check return of fgets
 lis r5, stdin@ha
@@ -81,10 +84,9 @@ ori r3, r3, success_message@l
 bl puts
 b epilogue
 
-#Error, r3 is already set, simply run printf!
+#Error, r3 is already set, simply run puts!
 error:
-crxor 6,6,6
-bl printf
+bl puts
 
 #Epilogue
 epilogue:

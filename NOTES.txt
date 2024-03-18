@@ -1,4 +1,4 @@
-First thing's First. Waltress is an alpha-type program. Meaning it's not ready for "production" usage. Bugs and weird errors will most likely occur. Do not rely on Waltress as your main Gecko Code assembler. If Waltress ever reaches version 1.0.0, then it will be considered ready for production use.
+First thing's First. Waltress is an alpha-type program. Meaning it's not ready for "production" usage. Bugs and weird errors will most likely occur. Do not rely on Waltress as your main Wii Gecko Code assembler. If Waltress ever reaches version 1.0.0, then it will be considered ready for production use.
 
 At the moment, the only "nuisance" Waltress possesses is the IMM (Immediate) Value Format rules that must be followed. Be sure to read --IMM-Format-- further below.
 
@@ -11,8 +11,8 @@ Features~
 - If there is a faulty instruction when assembling, Waltress will tell you which instruction it is (if multiple, Waltress only lists the top/first one)
 - Checks all rA=/=r0 rules for all applicable load/store instructions
 - Checks if NB in lswi does not cause rD's loaded bytes to spill into rA
-- Checks for all valid SPRs for both mfspr and mtspr, note that the validity is only matched for the Wii Broadway chip
-- Includes support for Broadway's rarely known chip ID SPRs
+- Checks for all valid SPR's for both mfspr and mtspr, note that the validity is only matched for the Wii Broadway chip
+- Includes support for Broadway's rarely known chip ID SPR's
 - When disassembling, clrlwi, clrrwi, rotlwi, rotlw, slwi, and srwi are used over their standard mnemonic forms.
 - Anything that can be assembled can be disassembled and vice versa.
 
@@ -28,34 +28,19 @@ The above limitations may be fixed in the future, who knows.
 
 Waltress supports all simplified mnemonics except for the following...
 
-inslwi
-insrwi
-extlwi
-extrwi
-clrlswi
+inslwi(.)
+insrwi(.)
+extlwi(.)
+extrwi(.)
+clrlswi(.)
+rotrwi(.)
 la
-
-============
-
--Important NOTE regarding mfspr and mtspr simplified mnemonics-
-
-Any valid SPR in the mfspr/mtspr can be used in the following format..
-mtNAME rX
-mfNAME rX
-
-NAME = the SPR's name ofc
-
-Example:
-mtl2cr r11 #Move r11 contents to L2CR
-mfhid0 r30 #Move HID0 contents to r30
-
-No other PPC assembler can do this for all the SPRs!
-
-Because this special SPR format is Waltress-unique, you *CANNOT* use the "legacy format" which is valid for some SPRS. For example....
-mtibatu 3, r12 #Move r12 contents to IBAT3u
-
-The above instruction *WON'T* work in Waltress. Use the new and improved format instead!
-mtibat3u r12 #Better format! Hooray!
+twlt
+twgt
+tweq
+twge
+twle
+twne
 
 ============
 
@@ -85,13 +70,15 @@ IMPORTANT NOTE: Do not place any notes/comments before the Gecko Header.
 
 -IMM-Format-
 
-Waltress does require some strict Formatting in regards to Hex vs Decimal when it comes to IMM (immediate value) usage. Leading zeroes are allowed. 
+Waltress does require some strict Formatting in regards to Hex vs Decimal when it comes to certain IMM (immediate value) usage. Leading zeroes are allowed. Negative connotation on Hex values is allowed except for branches.
 
-All 16-bit IMMs (i.e. SIMM in addi, i.e. UIMM in ori) *must* be in Hex.
+All usage of Hex Letters (A thru F) *must* be capitalized.
 
-All 12-bit SIMMs in the psq load/store instructions *must* be in Hex.
+SIMM's & UIMM's of integer instructions can be in Hex or Decimal
 
-All Branch SIMMs *must* be in Hex.
+All other SIMM's and UIMM's *must* be in Hex.
+
+All Branch SIMMs *must* be in Unsigned Hex.
 
 IMM in mtfsfi(.) *must* be in Hex.
 
@@ -99,7 +86,17 @@ CRM field in mtcrf *must* be in Hex.
 
 FM field in mtfsf(.) *must* be in Hex.
 
-All negative values *must* be in there "unsigned" form. (i.e. -0x4 must be typed as 0xFFFFFFFC). This really only becomes a nuisance for unconditional branch SIMMs.
+SPR field in mfspr & mtspr *must* be in Decimal.
+
+crF field *must* be in Decimal.
+
+crB field *must* be in Decimal.
+
+SH, MB, and ME field of rotation instructions *must* be in Decimal.
+
+BO & BI in standard mnemonic branch instructions *must* be in Decimal.
+
+W, I, and GQR fields of paired single instructions *must* be in Decimal.
 
 All other fields/immediate-values not mentioned above *must* be in Decimal.
 
@@ -109,7 +106,8 @@ All other fields/immediate-values not mentioned above *must* be in Decimal.
 
 Branch labels are allowed as long as they meet the following criteria
 
-*Use capital letters, or capital letters w/ underscore(s)
+*The very first PPC instruction of your source *CANNOT* be a branch w/ a branch label
+*Use capital letters and/or underscores
 *No shorter than 3 characters in length
 *No longer than 31 characters in length
 
@@ -118,9 +116,43 @@ beq SOMEWHERE
 ...
 SOMEWHERE:
 
-There is currently a bug to where if a branch label(s) has multiple landing spots, the most upper landing spot will be used for the branch SIMM calculation. Proper operation would be an outright rejection of assembling the source.s.
+============
 
-=============
+-Important NOTE regarding mfspr and mtspr simplified mnemonics-
+
+Any valid SPR in the mfspr/mtspr can be used in the following format..
+mtNAME rX
+mfNAME rX
+
+NAME = the SPR's name ofc
+
+Example:
+mtl2cr r11 #Move r11 contents to L2CR
+mfhid0 r30 #Move HID0 contents to r30
+
+No other PPC assembler can do this for all the SPRs!
+
+Because this special SPR format is Waltress-unique, you *CANNOT* use the "legacy format" which is valid for some SPRS. For example....
+mtibatu 3, r12 #Move r12 contents to IBAT3u
+
+The above instruction *WON'T* work in Waltress. Use the new and improved format instead!
+mtibat3u r12 #Better format! Hooray!
+
+============
+
+-Comments-
+
+Comments are indeed supported. You can use standard hash comments and chain comments.
+
+Examples:
+nop #Standard comment
+nop /*Chain comment*/
+/*This
+is
+a
+Chain comment*/
+
+============
 
 NOTE ("noobies" can disregard this note): For the following instructions...
 

@@ -3,7 +3,7 @@
 echo "Enter directory where devkitpro is installed at. If unsure, this is usually located at /opt"
 read devkitloc
 
-echo "Enter directory where HBC-Source is located at (i.e. /home/zak/Waltress02132024)"
+echo "Enter directory where the HBC-Source directory is located at (i.e. /home/Vega/Waltress03182024)"
 read walloc
 
 cd $devkitloc/devkitpro/devkitPPC/bin
@@ -14,7 +14,7 @@ cd $devkitloc/devkitpro/devkitPPC/bin
 
 ./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/bin2txt.s -o $walloc/HBC-Source/build/bin2txt.o
 
-./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/finalized_assembled_bin.s -o $walloc/HBC-Source/build/finalized_assembled_bin.o
+./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/finalize_assembled_bin.s -o $walloc/HBC-Source/build/finalize_assembled_bin.o
 
 ./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/gencodebinsize.s -o $walloc/HBC-Source/build/gencodebinsize.o
 
@@ -41,6 +41,14 @@ cd $devkitloc/devkitpro/devkitPPC/bin
 ./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/newline_fixer.s -o $walloc/HBC-Source/build/newline_fixer.o
 
 ./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/branchlabelparser.s -o $walloc/HBC-Source/build/branchlabelparser.o
+
+./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/simm_length_checker.s -o $walloc/HBC-Source/build/simm_length_checker.o
+
+./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/fix_neg_hex.s -o $walloc/HBC-Source/build/fix_neg_hex.o
+
+./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/asm_engine.s -o $walloc/HBC-Source/build/asm_engine.o
+
+./powerpc-eabi-as -mregnames -mbroadway $walloc/HBC-Source/build/dasm_engine.s -o $walloc/HBC-Source/build/dasm_engine.o
 
 cd $walloc/HBC-Source
 make

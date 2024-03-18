@@ -1,6 +1,6 @@
 /*
     Waltress - 100% Broadway Compliant PPC Assembler+Disassembler written in PPC
-    Copyright (C) 2023 Vega
+    Copyright (C) 2022-2024 Vega
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
 #r3 = 0 (success)
 #r3 = -1 (sprintf fail, should never happen)
 
-.globl main_dasm
-main_dasm:
+.globl dasm_engine
+dasm_engine:
 
 #Handy Symbols
 .set rc, 0x00000001
@@ -75,10 +75,10 @@ main_dasm:
 .set divwX, 0x7C0003D6 
 .set divwuX, 0x7C000396 
 .set eciwx, 0x7C00026C 
-.set ecowx, 0x7C00036C #0xA0 
-.set eieio, 0x7C0006AC #0xA4 
-.set eqvX, 0x7C000238 #0xA8 
-.set extsbX, 0x7C000774 #0xAC 
+.set ecowx, 0x7C00036C
+.set eieio, 0x7C0006AC
+.set eqvX, 0x7C000238
+.set extsbX, 0x7C000774
 .set extshX, 0x7C000734 #0xB0 
 .set fabsX, 0xFC000210 #0xB4 
 .set faddX, 0xFC00002A #0xB8 
@@ -231,9 +231,9 @@ main_dasm:
 .set stfsx, 0x7C00052E #0x304 stfsx
 .set sth, 0xB0000000 #0x308 sth
 .set sthbrx, 0x7C00072C #0x30C sthbrx
-.set sthu, 0xB4000000 #0x310 sthu
-.set sthux, 0x7C00036E #0x314 sthux
-.set sthx, 0x7C00032E #0x318 sthx
+.set sthu, 0xB4000000
+.set sthux, 0x7C00036E
+.set sthx, 0x7C00032E
 .set stmw, 0xBC000000 
 .set stswi, 0x7C0005AA 
 .set stswx, 0x7C00052A 
@@ -551,13 +551,13 @@ beq- do_invalid
 #Prologue
 stwu sp, -0x0020 (sp)
 mflr r0
-stw r0, 0x0024 (sp)
 stw r26, 0x8 (sp)
 stw r27, 0xC (sp)
 stw r28, 0x10 (sp)
 stw r29, 0x14 (sp)
 stw r30, 0x18 (sp)
 stw r31, 0x1C (sp)
+stw r0, 0x0024 (sp)
 
 #Place r4 arg in GVR
 #Don't move r3 due to later call of sprintf
@@ -567,10 +567,7 @@ mr r31, r4
 #Having this type of table instead of a typical table above results in way less overall instructions
 #addi (1 instruction) is better than lis, la (2 instructions)
 bl table
-table_start:
-
-#Sprintf function location spot
-.long 0 
+table_start: 
 
 #Instruction disassembled ASCii strings
 ins_add:
@@ -602,15 +599,23 @@ ins_addeo_:
 
 ins_addi:
 .asciz "addi r%d, r%d, 0x%X"
+ins_subi:
+.asciz "subi r%d, r%d, 0x%X"
 
 ins_addic:
 .asciz "addic r%d, r%d, 0x%X"
+ins_subic:
+.asciz "subic r%d, r%d, 0x%X"
 
 ins_addic_:
 .asciz "addic. r%d, r%d, 0x%X"
+ins_subic_:
+.asciz "subic. r%d, r%d, 0x%X"
 
 ins_addis:
 .asciz "addis r%d, r%d, 0x%X"
+ins_subis:
+.asciz "subis r%d, r%d, 0x%X"
 
 ins_addme:
 .asciz "addme r%d, r%d"
@@ -2829,7 +2834,12 @@ mr r6, r7 #Don't need rA (r6)
 addi r4, r10, ins_li - table_start
 b epilogue_main
 not_li:
+cmpwi r7, 0
+blt- 0xC
 addi r4, r10, ins_addi - table_start
+b epilogue_main
+neg r7, r7
+addi r4, r10, ins_subi - table_start
 b epilogue_main
 
 #Check for addic
@@ -2841,7 +2851,12 @@ bne+ check_addic_
 rD r5
 rA r6
 SIMM r7
+cmpwi r7, 0
+blt- 0xC
 addi r4, r10, ins_addic - table_start
+b epilogue_main
+neg r7, r7
+addi r4, r10, ins_subic - table_start
 b epilogue_main
 
 #Check for addic.
@@ -2853,7 +2868,12 @@ bne+ check_addis
 rD r5
 rA r6
 SIMM r7
+cmpwi r7, 0
+blt- 0xC
 addi r4, r10, ins_addic_ - table_start
+b epilogue_main
+neg r7, r7
+addi r4, r10, ins_subic_ - table_start
 b epilogue_main
 
 #Check for addis
@@ -2872,7 +2892,13 @@ mr r6, r7 #Don't need rA (r6)
 addi r4, r10, ins_lis - table_start
 b epilogue_main
 not_lis:
+andi. r0, r7, 0x8000 #Check if negative if it was halfword sign extended
+bne- 0xC #If so, do subis
 addi r4, r10, ins_addis - table_start
+b epilogue_main
+extsh r7, r7 #oris r7, r7, 0xFFFF also works here
+neg r7, r7
+addi r4, r10, ins_subis - table_start
 b epilogue_main
 
 #Check for addmeX
@@ -8496,9 +8522,7 @@ mr r5, r31
 #Not the correct label name, but I'm too lazy to change all the branch label names that just here, lmao.
 epilogue_main:
 #Call sprintf
-lwz r12, 0 (r10)
-mtlr r12
-blrl
+bl sprintf
 
 #Verify return of sprintf
 cmpwi r3, 0
@@ -8507,13 +8531,13 @@ bgt- 0x8
 li r3, -2
 
 #Real epilogue
-lwz r26, 0x8 (sp)
-lwz r27, 0xC (sp)
-lwz r28, 0x10 (sp)
-lwz r29, 0x14 (sp)
-lwz r30, 0x18 (sp)
-lwz r31, 0x1C (sp)
 lwz r0, 0x0024 (sp)
+lwz r31, 0x1C (sp)
+lwz r30, 0x18 (sp)
+lwz r29, 0x14 (sp)
+lwz r28, 0x10 (sp)
+lwz r27, 0xC (sp)
+lwz r26, 0x8 (sp)
 mtlr r0
 addi sp, sp, 0x0020
 blr

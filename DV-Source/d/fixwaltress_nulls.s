@@ -5,11 +5,9 @@
 
 #TODO maybe write in code to check if r4 = 1 then simply blr back!
 
-.set enter, 0x0A
-
 .globl fixwaltress_nulls
 fixwaltress_nulls:
-li r5, enter
+li r5, 0xA
 li r6, 0
 mtctr r4
 

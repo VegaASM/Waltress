@@ -1,4 +1,4 @@
-	.file	"finalized_assembled_bin.c"
+	.file	"finalize_assembled_bin.c"
 	.machine ppc
 	.section	".text"
 	.ident	"GCC: (devkitPPC release 44.2) 13.2.0"
@@ -161,3 +161,4 @@ subi r4, r4, 4 #Decrement shift-left amount
 bdnz+ as2hexloop
 mr r3, r5
 blr
+
