@@ -3,7 +3,7 @@
 echo "Enter directory where devkitpro is installed at. If unsure, this is usually located at /opt"
 read devkitloc
 
-echo "Enter directory where the HBC-Source directory is located at (i.e. /home/Vega/Waltress03182024)"
+echo "Enter directory where the HBC-Source directory is located at (i.e. /home/Vega/Waltress03242024)"
 read walloc
 
 cd $devkitloc/devkitpro/devkitPPC/bin

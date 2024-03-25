@@ -24,7 +24,7 @@
 #include "b/add_header.s"
 
 prompt_message:
-.asciz "Welcome to Waltress! Version 0.8\n\nCreated by Vega\n\nType a for Assembling, type d for Disassembling. "
+.asciz "Welcome to Waltress! Version 0.9\n\nCreated by Vega\n\nEnter a for Assembling, enter d for Disassembling. "
 
 success_message:
 .asciz "Success!\n\n"

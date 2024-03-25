@@ -1,3 +1,8 @@
+3/24/2024 (v0.9): Still Not There Yet
+*Lifted more IMM restrictions off many instructions
+*Fixed a tiny bug in the disassembler when it came to deciphering crclr vs crxor instruction
+*On previous version, I thought I fixed the "junk name-only" bug. Apparently I didn't, so now it's actually fixed.
+
 3/18/2024 (v0.8): Somewhat Useful Now
 *Engine files are now standard functions within Source. This prevents faults occurring on certain versions of QEMU
 *Some Immediate Value restrictions have been lifted (i.e. can use decimal values for SIMMs/UIMMs of integer instructions, can use negative hex values for most instructions, etc)

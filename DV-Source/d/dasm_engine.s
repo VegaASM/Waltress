@@ -5000,7 +5000,7 @@ crbA r6
 crbB r7
 cmpw r5, r6
 bne- not_crclr
-cmpw cr7, r5, r7
+cmpw r5, r7
 bne- not_crclr
 addi r4, r10, ins_crclr - table_start
 b epilogue_main

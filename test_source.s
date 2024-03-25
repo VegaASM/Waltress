@@ -11,23 +11,57 @@ adde r5, r15, r25
 adde. r5, r15, r25
 addeo r5, r15, r25
 addeo. r5, r15, r25
-addi r5, r15, 0x7777
+addi r5, r15, 0x777C
+addi r5, r15, 0x777c
+addi r5, r15, 4
 addi r5, r15, 0xFFFF9999
-li r5, 0x7777
+addi r5, r15, 0xffff9999
+addi r5, r15, -4
+li r5, 0x777C
+li r5, 0x777c
+li r5, 4
 li r5, 0xFFFF9999
-subi r5, r15, 0x7777
+li r5, 0xffff9999
+li r5, -4
+subi r5, r15, 0x777C
+subi r5, r15, 0x777c
+subi r5, r15, 4
 subi r5, r15, 0xFFFF9999
-addic r5, r15, 0x7777
+subi r5, r15, 0xffff9999
+subi r5, r15, -4
+addic r5, r15, 0x777C
+addic r5, r15, 0x777c
+addic r5, r15, 4
 addic r5, r15, 0xFFFF9999
-subic r5, r15, 0x7777
+addic r5, r15, 0xffff9999
+addic r5, r15, -4
+subic r5, r15, 0x777C
+subic r5, r15, 0x777c
+subic r5, r15, 4
 subic r5, r15, 0xFFFF9999
-addic. r5, r15, 0x7777
+subic r5, r15, 0xffff9999
+subic r5, r15, -4
+addic. r5, r15, 0x777C
+addic. r5, r15, 0x777c
+addic. r5, r15, 4
 addic. r5, r15, 0xFFFF9999
-subic. r5, r15, 0x7777
+addic. r5, r15, 0xffff9999
+addic. r5, r15, -4
+subic. r5, r15, 0x777C
+subic. r5, r15, 0x777c
+subic. r5, r15, 4
 subic. r5, r15, 0xFFFF9999
+subic. r5, r15, 0xffff9999
+subic. r5, r15, -4
 addis r5, r15, 0xDDDD
+addis r5, r15, 0xdddd
+addis r5, r15, 4
 lis r5, 0xDDDD
-subis r5, r15, 0xDDDD #Note there is a bug in Codewrite where it uses SIMM for subis instead of UIMM, switch the IMM to 0xFFFFDDDD when testing against Codewrite
+lis r5, 0xdddd
+lis r5, 4
+subis r5, r15, 0xDDDD #Note change to 0xFFFFDDDD if using Codewrite because Codewrite bug
+subis r5, r15, 0xdddd #Note change to 0xffffdddd if using Codewrite because Codewrite bug
+subis r5, r15, 4
 addme r5, r15
 addme. r5, r15
 addmeo r5, r15
@@ -41,7 +75,11 @@ and. r5, r15, r25
 andc r5, r15, r25
 andc. r5, r15, r25
 andi. r5, r15, 0xDDDD
+andi. r5, r15, 0xdddd
+andi. r5, r15, 4
 andis. r5, r15, 0xDDDD
+andis. r5, r15, 0xdddd
+andis. r5, r15, 4
 b 0x8
 b 0xFFFFFFF8
 ba 0x8
@@ -825,21 +863,33 @@ bdzlrl+
 cmp cr4, 0, r5, r15
 cmpw cr4, r5, r15
 cmpw r5, r15
-cmpi cr4, 0, r5, 0x8
+cmpi cr4, 0, r5, 0xA
+cmpi cr4, 0, r5, 0xa
 cmpi cr4, 0, r5, 0xFFFFFFF8
-cmpwi cr4, r5, 0x8
+cmpi cr4, 0, r5, 0xfffffff8
+cmpwi cr4, r5, 0xA
+cmpwi cr4, r5, 0xa
 cmpwi cr4, r5, 0xFFFFFFF8
-cmpwi r5, 0x8
+cmpwi cr4, r5, 0xfffffff8
+cmpwi r5, 0xA
+cmpwi r5, 0xa
 cmpwi r5, 0xFFFFFFF8
+cmpwi r5, 0xfffffff8
 cmpl cr4, 0, r5, r15
 cmplw cr4, r5, r15
 cmplw r5, r15
-cmpli cr4, 0, r5, 0x8
+cmpli cr4, 0, r5, 0xA
+cmpli cr4, 0, r5, 0xa
 cmpli cr4, 0, r5, 0xFFF8
-cmplwi cr4, r5, 0x8
+cmpli cr4, 0, r5, 0xfff8
+cmplwi cr4, r5, 0xA
+cmplwi cr4, r5, 0xa
 cmplwi cr4, r5, 0xFFF8
-cmplwi r5, 0x8
+cmplwi cr4, r5, 0xfff8
+cmplwi r5, 0xA
+cmplwi r5, 0xa
 cmplwi r5, 0xFFF8
+cmplwi r5, 0xfff8
 cntlzw r5, r15
 cntlzw. r5, r15
 crand 5, 15, 25
@@ -934,47 +984,77 @@ fsubs f5, f15, f25
 fsubs. f5, f15, f25
 icbi r5, r15
 isync
-lbz r5, 0x7777 (r15)
+lbz r5, 0x777C (r15)
+lbz r5, 0x777c (r15)
+lbz r5, 4 (r15)
 lbz r5, 0xFFFF9999 (r15)
-lbzu r5, 0x7777 (r15)
+lbz r5, 0xffff9999 (r15)
+lbz r5, -4 (r15)
+lbzu r5, 0x777C (r15)
+lbzu r5, 0x777c (r15)
 lbzu r5, 0xFFFF9999 (r15)
+lbzu r5, 0xffff9999 (r15)
 lbzux r5, r15, r25
 lbzx r5, r15, r25
-lfd f5, 0x7777 (r15)
+lfd f5, 0x777C (r15)
+lfd f5, 0x777c (r15)
 lfd f5, 0xFFFF9999 (r15)
-lfdu f5, 0x7777 (r15)
+lfd f5, 0xffff9999 (r15)
+lfdu f5, 0x777C (r15)
+lfdu f5, 0x777c (r15)
 lfdu f5, 0xFFFF9999 (r15)
+lfdu f5, 0xffff9999 (r15)
 lfdux f5, r15, r25
 lfdx f5, r15, r25
-lfs f5, 0x7777 (r15)
+lfs f5, 0x777C (r15)
+lfs f5, 0x777c (r15)
 lfs f5, 0xFFFF9999 (r15)
-lfsu f5, 0x7777 (r15)
+lfs f5, 0xffff9999 (r15)
+lfsu f5, 0x777C (r15)
+lfsu f5, 0x777c (r15)
 lfsu f5, 0xFFFF9999 (r15)
+lfsu f5, 0xffff9999 (r15)
 lfsux f5, r15, r25
 lfsx f5, r15, r25
-lha r5, 0x7777 (r15)
+lha r5, 0x777C (r15)
+lha r5, 0x777c (r15)
 lha r5, 0xFFFF9999 (r15)
-lhau r5, 0x7777 (r15)
+lha r5, 0xffff9999 (r15)
+lhau r5, 0x777C (r15)
+lhau r5, 0x777c (r15)
 lhau r5, 0xFFFF9999 (r15)
+lhau r5, 0xffff9999 (r15)
 lhaux r5, r15, r25
 lhax r5, r15, r25
 lhbrx r5, r15, r25
-lhz r5, 0x7777 (r15)
+lhz r5, 0x777C (r15)
+lhz r5, 0x777c (r15)
 lhz r5, 0xFFFF9999 (r15)
-lhzu r5, 0x7777 (r15)
+lhz r5, 0xffff9999 (r15)
+lhzu r5, 0x777C (r15)
+lhzu r5, 0x777c (r15)
 lhzu r5, 0xFFFF9999 (r15)
+lhzu r5, 0xffff9999 (r15)
 lhzux r5, r15, r25
 lhzx r5, r15, r25
-lmw r15, 0x7777 (r5)
+lmw r15, 0x777C (r5)
+lmw r15, 0x777c (r5)
 lmw r15, 0xFFFF9999 (r5)
-lswi r5, r15, 4
+lmw r15, 0xffff9999 (r5)
+lswi r5, r15, 12
+lswi r5, r15, 0xC
+lswi r5, r15, 0xc
 lswx r5, r15, r25
 lwarx r5, r15, r25
 lwbrx r5, r15, r25
-lwz r5, 0x7777 (r15)
+lwz r5, 0x777C (r15)
+lwz r5, 0x777c (r15)
 lwz r5, 0xFFFF9999 (r15)
-lwzu r5, 0x7777 (r15)
+lwz r5, 0xffff9999 (r15)
+lwzu r5, 0x777C (r15)
+lwzu r5, 0x777c (r15)
 lwzu r5, 0xFFFF9999 (r15)
+lwzu r5, 0xffff9999 (r15)
 lwzux r5, r15, r25
 lwzx r5, r15, r25
 mcrf cr4, cr6
@@ -1014,8 +1094,10 @@ mulhw r5, r15, r15
 mulhw. r5, r15, r15
 mulhwu r5, r15, r15
 mulhwu. r5, r15, r15
-mulli r5, r15, 0x7777
+mulli r5, r15, 0x777C
+mulli r5, r15, 0x777c
 mulli r5, r15, 0xFFFF9999
+mulli r5, r15, 0xffff9999
 mullw r5, r15, r25
 mullw. r5, r15, r25
 mullwo r5, r15, r25
@@ -1037,18 +1119,28 @@ mr. r5, r15
 orc r5, r15, r25
 orc. r5, r15, r25
 ori r5, r15, 0xDDDD
+ori r5, r15, 0xdddd
 nop
 oris r5, r15, 0xDDDD
-psq_l f5, 0x777 (r15), 1, 2
+oris r5, r15, 0xdddd
+psq_l f5, 0x77C (r15), 1, 2
+psq_l f5, 0x77c (r15), 1, 2
 psq_l f5, 0xFFFFF999 (r15), 1, 2
-psq_lu f5, 0x777 (r15), 1, 2
+psq_l f5, 0xfffff999 (r15), 1, 2
+psq_lu f5, 0x77C (r15), 1, 2
+psq_lu f5, 0x77c (r15), 1, 2
 psq_lu f5, 0xFFFFF999 (r15), 1, 2
+psq_lu f5, 0xfffff999 (r15), 1, 2
 psq_lux f5, r15, r25, 1, 2
 psq_lx f5, r15, r25, 1, 2
-psq_st f5, 0x777 (r15), 1, 2
+psq_st f5, 0x77C (r15), 1, 2
+psq_st f5, 0x77c (r15), 1, 2
 psq_st f5, 0xFFFFF999 (r15), 1, 2
-psq_stu f5, 0x777 (r15), 1, 2
+psq_st f5, 0xfffff999 (r15), 1, 2
+psq_stu f5, 0x77C (r15), 1, 2
+psq_stu f5, 0x77c (r15), 1, 2
 psq_stu f5, 0xFFFFF999 (r15), 1, 2
+psq_stu f5, 0xfffff999 (r15), 1, 2
 psq_stux f5, r15, r25, 1, 2
 psq_stx f5, r15, r25, 1, 2
 ps_abs f5, f15
@@ -1097,8 +1189,8 @@ ps_res f5, f15
 ps_res. f5, f15
 ps_rsqrte f5, f15
 ps_rsqrte. f5, f15
-ps_sel f5, f15, f25, f9 #NOTE Codewrite doesn't assemble ps_sel instructions correctly
-ps_sel. f5, f15, f25, f9 #NOTE Codewrite doesn't assemble ps_sel instructions correctly
+ps_sel f5, f15, f25, f9 #NOTE Codewrite doesn't assemble this correctly
+ps_sel. f5, f15, f25, f9 #NOTE Codewrite doesn't assemble this correctly
 ps_sub f5, f15, f25
 ps_sub. f5, f15, f25
 ps_sum0 f5, f15, f25, f9
@@ -1107,9 +1199,17 @@ ps_sum1 f5, f15, f25, f9
 ps_sum1. f5, f15, f25, f9
 rfi
 rlwimi r5, r15, 25, 10, 20
+rlwimi r5, r15, 0xB, 0xB, 0xB
+rlwimi r5, r15, 0xb, 0xb, 0xb
 rlwimi. r5, r15, 25, 10, 20
+rlwimi. r5, r15, 0xB, 0xB, 0xB
+rlwimi. r5, r15, 0xb, 0xb, 0xb
 rlwinm r5, r15, 25, 10, 20
+rlwinm r5, r15, 0xB, 0xB, 0xB
+rlwinm r5, r15, 0xb, 0xb, 0xb
 rlwinm. r5, r15, 25, 10, 20
+rlwinm. r5, r15, 0xB, 0xB, 0xB
+rlwinm. r5, r15, 0xb, 0xb, 0xb
 rotlwi r5, r15, 25
 rotlwi. r5, r15, 25
 slwi r5, r15, 25
@@ -1121,7 +1221,11 @@ clrlwi. r5, r15, 25
 clrrwi r5, r15, 25
 clrrwi. r5, r15, 25
 rlwnm r5, r15, r25, 10, 20
+rlwnm r5, r15, r25, 0xB, 0xB
+rlwnm r5, r15, r25, 0xb, 0xb
 rlwnm. r5, r15, r25, 10, 20
+rlwnm. r5, r15, r25, 0xB, 0xB
+rlwnm. r5, r15, r25, 0xb, 0xb
 rotlw r5, r15, r25
 rotlw. r5, r15, r25
 sc
@@ -1133,42 +1237,66 @@ srawi r5, r15, 25
 srawi. r5, r15, 25
 srw r5, r15, r25
 srw. r5, r15, r25
-stb r5, 0x7777 (r15)
+stb r5, 0x777C (r15)
+stb r5, 0x777c (r15)
 stb r5, 0xFFFF9999 (r15)
-stbu r5, 0x7777 (r15)
+stb r5, 0xffff9999 (r15)
+stbu r5, 0x777C (r15)
+stbu r5, 0x777c (r15)
 stbu r5, 0xFFFF9999 (r15)
+stbu r5, 0xffff9999 (r15)
 stbux r5, r15, r25
 stbx r5, r15, r25
-stfd f5, 0x7777 (r15)
+stfd f5, 0x777C (r15)
+stfd f5, 0x777c (r15)
 stfd f5, 0xFFFF9999 (r15)
-stfdu f5, 0x7777 (r15)
+stfd f5, 0xffff9999 (r15)
+stfdu f5, 0x777C (r15)
+stfdu f5, 0x777c (r15)
 stfdu f5, 0xFFFF9999 (r15)
+stfdu f5, 0xffff9999 (r15)
 stfdux f5, r15, r25
 stfdx f5, r15, r25
 stfiwx f5, r15, r25
-stfs f5, 0x7777 (r15)
+stfs f5, 0x777C (r15)
+stfs f5, 0x777c (r15)
 stfs f5, 0xFFFF9999 (r15)
-stfsu f5, 0x7777 (r15)
+stfs f5, 0xffff9999 (r15)
+stfsu f5, 0x777C (r15)
+stfsu f5, 0x777c (r15)
 stfsu f5, 0xFFFF9999 (r15)
+stfsu f5, 0xffff9999 (r15)
 stfsux f5, r15, r25
 stfsx f5, r15, r25
-sth r5, 0x7777 (r15)
+sth r5, 0x777C (r15)
+sth r5, 0x777c (r15)
 sth r5, 0xFFFF9999 (r15)
+sth r5, 0xffff9999 (r15)
 sthbrx r5, r15, r25
-sthu r5, 0x7777 (r15)
+sthu r5, 0x777C (r15)
+sthu r5, 0x777c (r15)
 sthu r5, 0xFFFF9999 (r15)
+sthu r5, 0xffff9999 (r15)
 sthux r5, r15, r25
 sthx r5, r15, r25
-stmw r5, 0x7777 (r15)
+stmw r5, 0x777C (r15)
+stmw r5, 0x777c (r15)
 stmw r5, 0xFFFF9999 (r15)
-stswi r5, r15, 4
+stmw r5, 0xffff9999 (r15)
+stswi r5, r15, 12
+stswi r5, r15, 0xC
+stswi r5, r15, 0xc
 stswx r5, r15, r25
-stw r5, 0x7777 (r15)
+stw r5, 0x777C (r15)
+stw r5, 0x777c (r15)
 stw r5, 0xFFFF9999 (r15)
+stw r5, 0xffff9999 (r15)
 stwbrx r5, r15, r25
 stwcx. r5, r15, r25
-stwu r5, 0x7777 (r15)
+stwu r5, 0x777C (r15)
+stwu r5, 0x777c (r15)
 stwu r5, 0xFFFF9999 (r15)
+stwu r5, 0xffff9999 (r15)
 stwux r5, r15, r25
 stwx r5, r15, r25
 subf r5, r15, r25
@@ -1191,8 +1319,10 @@ subfe r5, r15, r25
 subfe. r5, r15, r25
 subfeo r5, r15, r25
 subfeo. r5, r15, r25
-subfic r5, r15, 0x7777
+subfic r5, r15, 0x777C
+subfic r5, r15, 0x777c
 subfic r5, r15, 0xFFFF9999
+subfic r5, r15, 0xffff9999
 subfme r5, r15
 subfme. r5, r15
 subfmeo r5, r15
@@ -1206,10 +1336,15 @@ tlbie r5
 tlbsync
 tw 5, r15, r25
 trap
-twi 5, r15, 0x7777
+twi 5, r15, 0x777C
+twi 5, r15, 0x777c
 twi 5, r15, 0xFFFF9999
+twi 5, r15, 0xffff9999
 xor r5, r15, r25
 xor. r5, r15, r25
 xori r5, r15, 0xDDDD
+xori r5, r15, 0xdddd
 xoris r5, r15, 0xDDDD
-.long 0x01234567
+xoris r5, r15, 0xdddd
+.long 0x0123456B
+.long 0x0123456b

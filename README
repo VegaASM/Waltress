@@ -8,9 +8,9 @@ Please read over this document to understand the contents of some of the folders
 
 Created by Vega
 
-Version 0.8
+Version 0.9
 
-Release Date: March 18, 2024
+Release Date: March 24, 2024
 
 ==========
 
@@ -32,7 +32,7 @@ DEBUG.txt #This file contains a guide on how to install & run the GNU Debugger t
 
 script.sh #File used for compiling the HBC app from source.
 
-tester_source.s #This is a source file (contains every PPC instruction) which is used during debugging to verify that Assembling and Disassembling outputs are 100% correct
+test_source.s #This is a source file (contains every PPC instruction) which is used during debugging to verify that Assembling and Disassembling outputs are 100% correct
 
 /DV #Desktop application
 

@@ -85,15 +85,21 @@ not_a_condi_branch:
 addi r3, r30, 2 #Point to "x" so first load is the first SIMM digit
 digit_width_loop:
 lbzu r0, 0x1 (r3)
-cmplwi r0, 0x46 #F
-bgt- done_w_digit_width_loop
-cmplwi r0, 0x30 #0
-blt- done_w_digit_width_loop
-cmplwi r0, 0x39 #9
-ble- digit_width_loop
-cmplwi r0, 0x41 #A
-bge- digit_width_loop
-done_w_digit_width_loop:
+cmplwi r0, 0x2F #0; look for gt
+cmplwi cr1, r0, 0x3A #9; look for lt 
+cmplwi cr4, r0, 0x40 #A; look for gt
+cmplwi cr5, r0, 0x47 #F; look for lt
+cmplwi cr6, r0, 0x60 #a; look for gt
+cmplwi cr7, r0, 0x67 #f; look for lt
+#. IF byte (> 2F && < 3A) || (> 40 && < 47) || (> 60 && < 67), then its a hex byte
+crand 4*cr0+eq, 4*cr0+gt, 4*cr1+lt #Don't want a crap ton of branch routes, yes this is SLOW
+crand 4*cr4+eq, 4*cr4+gt, 4*cr5+lt
+crand 4*cr6+eq, 4*cr6+gt, 4*cr7+lt
+cror 4*cr0+eq, 4*cr0+eq, 4*cr4+eq
+cror 4*cr0+eq, 4*cr0+eq, 4*cr6+eq
+beq+ digit_width_loop
+
+#Get count
 sub r29, r3, r30
 
 #Change negative ascii to temp positive
@@ -221,14 +227,20 @@ mtctr r4
 slwi r5, r4, 2 #r4 x 4 = start-off slw shiftor amount (r5)
 subi r4, r3, 1
 li r3, 0 #Register used to "compile" word
+fixneghex_ascii2hex_looppp:
 lbzu r6, 0x1 (r4)
 cmplwi r6, 0x39
 subi r5, r5, 4 #update shiftor amount
 bgt- 0xC
 clrlwi r6, r6, 28 #change 0x30 thru 0x39 to 0x0 thru 0x9
-b 0x8
-subi r6, r6, 0x37 #Change 0x41 thru 0x46 to 0xA thru 0xF
+b place_hex_digit_to_proper_slot
+cmplwi r6, 0x46
+bgt- 0xC
+subi r6, r6, 0x37 #Change 0x61 thru 0x66 to 0xA thru 0xF
+b place_hex_digit_to_proper_slot
+subi r6, r6, 0x57 #Change 0x41 thru 0x46 to 0xA thru 0xF
+place_hex_digit_to_proper_slot:
 slw r6, r6, r5 #Place hex digit into its proper slot
 or r3, r3, r6 #"compile" hexword
-bdnz+ -0x24
+bdnz+ fixneghex_ascii2hex_looppp
 blr

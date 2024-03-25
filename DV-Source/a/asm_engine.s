@@ -36,17 +36,6 @@ asm_engine:
 .set asm_lk, 0x00000001
 .set asm_aa, 0x00000002
 
-#A hacky patch to make sure something such as "nopjsdladjsa" doesn't get verified as "nop" from memcmp. Avoding strcmp and strncmp due to this code already being really slow
-#NOTE might just change to strcmp or strncmp instead to save length
-.macro pre_check_memcmp
-lbzx r0, r31, r5 #Null byte should be located at this offset
-cmpwi r0, 0
-bne- 0xC
-bl memcmp
-b 0x8
-li r3, -1
-.endm
-
 .macro call_sscanf_one
 addi r5, sp, 0x8
 mr r3, r31
@@ -84,6 +73,46 @@ addi r7, sp, 0x10
 addi r8, sp, 0x14
 addi r9, sp, 0x18
 mr r3, r31
+bl sscanf
+.endm
+
+.macro call_sscanf_one_multi
+addi r5, sp, 0x8
+mr r3, r28
+bl sscanf
+.endm
+
+.macro call_sscanf_two_multi
+addi r5, sp, 0x8
+addi r6, sp, 0xC
+mr r3, r28
+bl sscanf
+.endm
+
+.macro call_sscanf_three_multi
+addi r5, sp, 0x8
+addi r6, sp, 0xC
+addi r7, sp, 0x10
+mr r3, r28
+bl sscanf
+.endm
+
+.macro call_sscanf_four_multi
+addi r5, sp, 0x8
+addi r6, sp, 0xC
+addi r7, sp, 0x10
+addi r8, sp, 0x14
+mr r3, r28
+bl sscanf
+.endm
+
+.macro call_sscanf_five_multi
+addi r5, sp, 0x8
+addi r6, sp, 0xC
+addi r7, sp, 0x10
+addi r8, sp, 0x14
+addi r9, sp, 0x18
+mr r3, r28
 bl sscanf
 .endm
 
@@ -860,7 +889,7 @@ ori r5, r5, \lkbits
 lwz r0, 0x1C (r29)
 or r3, r0, r5
 .endm
- 
+
 #Following 4 macros are for simplified bclrX
 .macro process_bclrX_1sscanfarg BO_Value, lkbits #For bdnzflrX, bdzflrX, bdnztlrX, and bdztlrX
 lwz r5, 0x8 (sp) #BI
@@ -917,9 +946,10 @@ or r3, r0, r5
 
 #Start!
 
-#Prologue, backup r29 thru r31 and also create a space field of 0x14 in size
+#Prologue, backup r28 thru r31 and also create a space field of 0x18 in size (0x8 thru 0x1F)
 stwu sp, -0x0030 (sp)
 mflr r0
+stw r28, 0x20 (sp)
 stw r29, 0x24 (sp)
 stw r30, 0x28 (sp)
 stw r31, 0x2C (sp)
@@ -1165,6 +1195,75 @@ asm_table_start:
 .long 0x4E800021 #0x2C0 For simplified mnemonic blrl
 
 #Instruction decompiled ASCii strings
+r_r_simm_end:
+.asciz "r%d, r%d, %d"
+r_r_hexc_end:
+.asciz "r%d, r%d, 0x%X"
+r_r_hexl_end:
+.asciz "r%d, r%d, 0x%x"
+r_r_uimm_end:
+.asciz "r%d, r%d, %u" #NOTE for subis!!!! & logical shit! and stuff like srawi
+cr_d_r_hexc_end: #for compares
+.asciz "cr%d, %d, r%d, 0x%X"
+cr_d_r_hexl_end: #for compares
+.asciz "cr%d, %d, r%d, 0x%x"
+cr_d_r_simm_end: #for compares
+.asciz "cr%d, %d, r%d, %d"
+cr_d_r_uimm_end: #for logical compares
+.asciz "cr%d, %d, r%d, %u"
+r_hexc_end: #for defaulted cr0 compares, li, lis
+.asciz "r%d, 0x%X"
+r_hexl_end: #for defaulted cr0 compares, li, lis
+.asciz "r%d, 0x%x"
+r_simm_end: #for defaulted cr0 compares, li NOT lis
+.asciz "r%d, %d"
+r_uimm_end: #for defaulted cr0 logical compares, lis****
+.asciz "r%d, %u"
+cr_r_hexc_end: #for crX compares
+.asciz "cr%d, r%d, 0x%X"
+cr_r_hexl_end: #for crX compares
+.asciz "cr%d, r%d, 0x%x"
+cr_r_simm_end: #for crX compares
+.asciz "cr%d, r%d, %d"
+cr_r_uimm_end: #for crX compares
+.asciz "cr%d, r%d, %u"
+r_hexc_r_end: #for loads and stores
+.asciz "r%d, 0x%X (r%d)"
+r_hexl_r_end: #for loads and stores
+.asciz "r%d, 0x%x (r%d)"
+r_simm_r_end: #for loads and stores
+.asciz "r%d, %d (r%d)"
+f_hexc_r_end: #for float loads and stores
+.asciz "f%d, 0x%X (r%d)"
+f_hexl_r_end: #for float loads and stores
+.asciz "f%d, 0x%x (r%d)"
+f_simm_r_end: #for float loads and stores
+.asciz "f%d, %d (r%d)"
+f_hexc_r_d_d_end: #for psq loads and stores
+.asciz "f%d, 0x%X (r%d), %d, %d"
+f_hexl_r_d_d_end: #for psq loads and stores
+.asciz "f%d, 0x%x (r%d), %d, %d"
+f_simm_r_d_d_end: #for psq loads and stores
+.asciz "f%d, %d (r%d), %d, %d"
+r_r_d_d_d_end: #for rotate immediate ins's
+.asciz "r%d, r%d, %d, %d, %d"
+r_r_hexc_hexc_hexc_end: #for rotate immediate ins's
+.asciz "r%d, r%d, 0x%X, 0x%X, 0x%X"
+r_r_hexl_hexl_hexl_end: #for rotate immediate ins's
+.asciz "r%d, r%d, 0x%x, 0x%x, 0x%x"
+r_r_r_d_d_end: #for rotate reg ins's
+.asciz "r%d, r%d, r%d, %d, %d"
+r_r_r_hexc_hexc_end: #for rotate reg ins's
+.asciz "r%d, r%d, r%d, 0x%X, 0x%X"
+r_r_r_hexl_hexl_end: #for rotate reg ins's
+.asciz "r%d, r%d, r%d, 0x%x, 0x%x"
+d_r_hexc_end: #for twi
+.asciz "%d, r%d, 0x%X"
+d_r_hexl_end: #for twi
+.asciz "%d, r%d, 0x%x"
+d_r_d_end: #for twi
+.asciz "%d, r%d, %d"
+
 asm_ins_add:
 .asciz "add r%d, r%d, r%d"
 asm_ins_add_:
@@ -1193,44 +1292,28 @@ asm_ins_addeo_:
 .asciz "addeo. r%d, r%d, r%d"
 
 asm_ins_addi:
-.asciz "addi r%d, r%d, 0x%X"
-asm_ins_addiDEC:
-.asciz "addi r%d, r%d, %d"
+.ascii "addi"
 
 asm_ins_subi:
-.asciz "subi r%d, r%d, 0x%X"
-asm_ins_subiDEC:
-.asciz "subi r%d, r%d, %d"
+.ascii "subi"
 
 asm_ins_addic:
-.asciz "addic r%d, r%d, 0x%X"
-asm_ins_addicDEC:
-.asciz "addic r%d, r%d, %d"
+.ascii "addic"
 
 asm_ins_subic:
-.asciz "subic r%d, r%d, 0x%X"
-asm_ins_subicDEC:
-.asciz "subic r%d, r%d, %d"
+.ascii "subic"
 
 asm_ins_addic_:
-.asciz "addic. r%d, r%d, 0x%X"
-asm_ins_addic_DEC:
-.asciz "addic. r%d, r%d, %d"
+.ascii "addic."
 
 asm_ins_subic_:
-.asciz "subic. r%d, r%d, 0x%X"
-asm_ins_subic_DEC:
-.asciz "subic. r%d, r%d, %d"
+.ascii "subic."
 
 asm_ins_addis:
-.asciz "addis r%d, r%d, 0x%X"
-asm_ins_addisDEC:
-.asciz "addis r%d, r%d, %d"
+.ascii "addis" #NOTE remember decimal here is %u NOT %d
 
 asm_ins_subis:
-.asciz "subis r%d, r%d, 0x%X"
-asm_ins_subisDEC:
-.asciz "subis r%d, r%d, %u"
+.ascii "subis" #NOTE remember decimal here is %u NOT %d
 
 asm_ins_addme:
 .asciz "addme r%d, r%d"
@@ -1251,64 +1334,60 @@ asm_ins_addzeo_:
 .asciz "addzeo. r%d, r%d"
 
 asm_ins_and:
-.asciz "and r%d, r%d, r%d" #0x718
+.asciz "and r%d, r%d, r%d"
 asm_ins_and_:
-.asciz "and. r%d, r%d, r%d" #0x738
+.asciz "and. r%d, r%d, r%d"
 
 asm_ins_andc:
-.asciz "andc r%d, r%d, r%d" #0x758
+.asciz "andc r%d, r%d, r%d"
 asm_ins_andc_:
-.asciz "andc. r%d, r%d, r%d" #0x778
+.asciz "andc. r%d, r%d, r%d"
 
 asm_ins_andi_:
-.asciz "andi. r%d, r%d, 0x%X" #0x798
+.ascii "andi."
 
 asm_ins_andis_:
-.asciz "andis. r%d, r%d, 0x%X" #0x7B8
+.ascii "andis."
 
 asm_ins_b:
-.asciz "b 0x%X" #0x7D8
+.asciz "b 0x%X"
 asm_ins_ba:
-.asciz "ba 0x%X" #0x7F8
+.asciz "ba 0x%X"
 asm_ins_bl:
-.asciz "bl 0x%X" #0x818
+.asciz "bl 0x%X"
 asm_ins_bla:
-.asciz "bla 0x%X" #0x838
+.asciz "bla 0x%X"
 
 asm_ins_bc:
-.asciz "bc %d, %d, 0x%X" #0x858
+.asciz "bc %d, %d, 0x%X"
 asm_ins_bca:
-.asciz "bca %d, %d, 0x%X" #0x878
+.asciz "bca %d, %d, 0x%X"
 asm_ins_bcl:
-.asciz "bcl %d, %d, 0x%X" #0x898
+.asciz "bcl %d, %d, 0x%X"
 asm_ins_bcla:
-.asciz "bcla %d, %d, 0x%X" #0x8B8
+.asciz "bcla %d, %d, 0x%X"
 
 asm_ins_bcctr:
-.asciz "bcctr %d, %d" #0x8D8
+.asciz "bcctr %d, %d"
 asm_ins_bcctrl:
-.asciz "bcctrl %d, %d" #0x8F8
+.asciz "bcctrl %d, %d"
 
 asm_ins_bclr:
-.asciz "bclr %d, %d" #0x918
+.asciz "bclr %d, %d"
 asm_ins_bclrl:
-.asciz "bclrl %d, %d" #0x938
+.asciz "bclrl %d, %d"
 
 asm_ins_cmp:
-.asciz "cmp cr%d, %d, r%d, r%d" #0x958
+.asciz "cmp cr%d, %d, r%d, r%d"
 
 asm_ins_cmpi:
-.asciz "cmpi cr%d, %d, r%d, 0x%X" #0x978
-asm_ins_cmpiDEC:
-.asciz "cmpi cr%d, %d, r%d, %d" #0x978
+.ascii "cmpi"
 
 asm_ins_cmpl:
-.asciz "cmpl cr%d, %d, r%d, r%d" #0x998
+.asciz "cmpl cr%d, %d, r%d, r%d"
 
 asm_ins_cmpli:
-.asciz "cmpli cr%d, %d, r%d, 0x%X" #0x9B8
-asm_ins_cmpliDEC:
-.asciz "cmpli cr%d, %d, r%d, %u" #0x9B8
+.ascii "cmpli"
 
 asm_ins_cmpw: #Simplified mnemonic of cmp crX, 0, rX, rX
 .asciz "cmpw cr%d, r%d, r%d"
@@ -1316,13 +1395,7 @@ asm_ins_cmpw_cr0:
 .asciz "cmpw r%d, r%d"
 
 asm_ins_cmpwi: #Simplified mnemonic of cmpi crX, 0, rX, 0xXXXX
-.asciz "cmpwi cr%d, r%d, 0x%X"
-asm_ins_cmpwiDEC: #Simplified mnemonic of cmpi crX, 0, rX, XXXX
-.asciz "cmpwi cr%d, r%d, %d"
-asm_ins_cmpwi_cr0:
-.asciz "cmpwi r%d, 0x%X"
-asm_ins_cmpwi_cr0DEC:
-.asciz "cmpwi r%d, %d"
+.ascii "cmpwi" #NOTE don't forget crX vs cr0'd default
 
 asm_ins_cmplw: #Simplified mnemonic of cmpl crX, 0, rX, rX
 .asciz "cmplw cr%d, r%d, r%d"
@@ -1330,42 +1403,36 @@ asm_ins_cmplw_cr0:
 .asciz "cmplw r%d, r%d"
 
 asm_ins_cmplwi: #Simplified mnemonic of cmpli crX, 0, rX, 0xXXXX
-.asciz "cmplwi cr%d, r%d, 0x%X"
-asm_ins_cmplwiDEC: #Simplified mnemonic of cmpli crX, 0, rX, XXXX
-.asciz "cmplwi cr%d, r%d, %u"
-asm_ins_cmplwi_cr0:
-.asciz "cmplwi r%d, 0x%X"
-asm_ins_cmplwi_cr0DEC:
-.asciz "cmplwi r%d, %u"
+.ascii "cmplwi" #NOTE don't forget crX vs cr0'd default
 
 asm_ins_cntlzw:
-.asciz "cntlzw r%d, r%d" #0x9D8
+.asciz "cntlzw r%d, r%d"
 asm_ins_cntlzw_:
-.asciz "cntlzw. r%d, r%d" #0x9F8
+.asciz "cntlzw. r%d, r%d"
 
 asm_ins_crand:
-.asciz "crand %d, %d, %d" #0xA18
+.asciz "crand %d, %d, %d"
 
 asm_ins_crandc:
-.asciz "crandc %d, %d, %d" #0xA38
+.asciz "crandc %d, %d, %d"
 
 asm_ins_creqv:
-.asciz "creqv %d, %d, %d" #0xA58
+.asciz "creqv %d, %d, %d"
 
 asm_ins_crnand:
-.asciz "crnand %d, %d, %d" #0xA78
+.asciz "crnand %d, %d, %d"
 
 asm_ins_crnor:
-.asciz "crnor %d, %d, %d" #0xA98
+.asciz "crnor %d, %d, %d"
 
 asm_ins_cror:
-.asciz "cror %d, %d, %d" #0xAB8
+.asciz "cror %d, %d, %d"
 
 asm_ins_crorc:
-.asciz "crorc %d, %d, %d" #0xAD8
+.asciz "crorc %d, %d, %d"
 
 asm_ins_crxor:
-.asciz "crxor %d, %d, %d" #0xAF8
+.asciz "crxor %d, %d, %d"
 
 asm_ins_dcbf:
 .asciz "dcbf r%d, r%d" #0xB18
@@ -1413,7 +1480,7 @@ asm_ins_ecowx:
 .asciz "ecowx r%d, r%d, r%d" #0xD18
 
 asm_ins_eieio:
-.asciz "eieio" #0xD38
+.asciz "eieio"
 
 asm_ins_eqv:
 .asciz "eqv r%d, r%d, r%d"
@@ -1570,13 +1637,13 @@ asm_ins_icbi:
 .asciz "icbi r%d, r%d" #0x14C8
 
 asm_ins_isync:
-.asciz "isync" #0x14E8
+.asciz "isync"
 
 asm_ins_lbz:
-.asciz "lbz r%d, 0x%X (r%d)"
+.ascii "lbz"
 
 asm_ins_lbzu:
-.asciz "lbzu r%d, 0x%X (r%d)" #0x1518
+.ascii "lbzu"
 
 asm_ins_lbzux:
 .asciz "lbzux r%d, r%d, r%d" #0x1538
@@ -1585,10 +1652,10 @@ asm_ins_lbzx:
 .asciz "lbzx r%d, r%d, r%d" #0x1558
 
 asm_ins_lfd:
-.asciz "lfd f%d, 0x%X (r%d)" #0x1578
+.ascii "lfd"
 
 asm_ins_lfdu:
-.asciz "lfdu f%d, 0x%X (r%d)" #0x1598
+.ascii "lfdu"
 
 asm_ins_lfdux:
 .asciz "lfdux f%d, r%d, r%d" #0x15B8
@@ -1597,10 +1664,10 @@ asm_ins_lfdx:
 .asciz "lfdx f%d, r%d, r%d" #0x15D8
 
 asm_ins_lfs:
-.asciz "lfs f%d, 0x%X (r%d)" #0x15F8
+.ascii "lfs"
 
 asm_ins_lfsu:
-.asciz "lfsu f%d, 0x%X (r%d)" #0x1618
+.ascii "lfsu"
 
 asm_ins_lfsux:
 .asciz "lfsux f%d, r%d, r%d" #0x1638
@@ -1609,10 +1676,10 @@ asm_ins_lfsx:
 .asciz "lfsx f%d, r%d, r%d" #0x1658
 
 asm_ins_lha:
-.asciz "lha r%d, 0x%X (r%d)" #0x1678
+.ascii "lha"
 
 asm_ins_lhau:
-.asciz "lhau r%d, 0x%X (r%d)" #0x1698
+.ascii "lhau"
 
 asm_ins_lhaux:
 .asciz "lhaux r%d, r%d, r%d" #0x16B8
@@ -1624,10 +1691,10 @@ asm_ins_lhbrx:
 .asciz "lhbrx r%d, r%d, r%d" #0x16F8
 
 asm_ins_lhz:
-.asciz "lhz r%d, 0x%X (r%d)" #0x1718
+.ascii "lhz"
 
 asm_ins_lhzu:
-.asciz "lhzu r%d, 0x%X (r%d)" #0x1738
+.ascii "lhzu"
 
 asm_ins_lhzux:
 .asciz "lhzux r%d, r%d, r%d" #0x1758
@@ -1636,20 +1703,16 @@ asm_ins_lhzx:
 .asciz "lhzx r%d, r%d, r%d" #0x1778
 
 asm_ins_li: #Simplified mnemonic for addi rX, r0, 0xXXXX
-.asciz "li r%d, 0x%X"
-asm_ins_liDEC: #Simplified mnemonic for addi rX, r0, XXXX
-.asciz "li r%d, %d"
+.ascii "li"
 
 asm_ins_lis: #Simplified mnemonic for addis rX, r0, 0xXXXX
-.asciz "lis r%d, 0x%X"
-asm_ins_lisDEC: #Simplified mnemonic for addis rX, r0, 0xXXXX
-.asciz "lis r%d, %u"
+.ascii "lis" #NOTE remember decimal here is %u NOT %d
 
 asm_ins_lmw:
-.asciz "lmw r%d, 0x%X (r%d)" #0x1798
+.ascii "lmw"
 
 asm_ins_lswi:
-.asciz "lswi r%d, r%d, %d" #0x17B8
+.ascii "lswi"
 
 asm_ins_lswx:
 .asciz "lswx r%d, r%d, r%d" #0x17D8
@@ -1661,10 +1724,10 @@ asm_ins_lwbrx:
 .asciz "lwbrx r%d, r%d, r%d" #0x1818
 
 asm_ins_lwz:
-.asciz "lwz r%d, 0x%X (r%d)" #0x1838
+.ascii "lwz"
 
 asm_ins_lwzu:
-.asciz "lwzu r%d, 0x%X (r%d)" #0x1858
+.ascii "lwzu"
 
 asm_ins_lwzux:
 .asciz "lwzux r%d, r%d, r%d" #0x1878
@@ -1764,9 +1827,7 @@ asm_ins_mulhwu_:
 .asciz "mulhwu. r%d, r%d, r%d" #0x1C18
 
 asm_ins_mulli:
-.asciz "mulli r%d, r%d, 0x%X" #0x1C38
-asm_ins_mulliDEC:
-.asciz "mulli r%d, r%d, %d" #0x1C38
+.ascii "mulli"
 
 asm_ins_mullw:
 .asciz "mullw r%d, r%d, r%d" #0x1C58
@@ -1815,28 +1876,28 @@ asm_ins_orc_:
 .asciz "orc. r%d, r%d, r%d" #0x1E38
 
 asm_ins_ori:
-.asciz "ori r%d, r%d, 0x%X" #0x1E58
+.ascii "ori"
 
 asm_ins_oris:
-.asciz "oris r%d, r%d, 0x%X" #0x1E78
+.ascii "oris"
 
 asm_ins_psq_l:
-.asciz "psq_l f%d, 0x%X (r%d), %d, %d" #0x1E98
+.ascii "psq_l"
 
 asm_ins_psq_lu:
-.asciz "psq_lu f%d, 0x%X (r%d), %d, %d" #0x1ED8
+.ascii "psq_lu"
 
 asm_ins_psq_lux:
-.asciz "psq_lux f%d, r%d, r%d, %d, %d" #0x1F18
+.asciz "psq_lux f%d, r%d, r%d, %d, %d"
 
 asm_ins_psq_lx:
-.asciz "psq_lx f%d, r%d, r%d, %d, %d" #0x1F58
+.asciz "psq_lx f%d, r%d, r%d, %d, %d"
 
 asm_ins_psq_st:
-.asciz "psq_st f%d, 0x%X (r%d), %d, %d" #0x1F98
+.ascii "psq_st"
 
 asm_ins_psq_stu:
-.asciz "psq_stu f%d, 0x%X (r%d), %d, %d" #0x1FD8
+.ascii "psq_stu"
 
 asm_ins_psq_stux:
 .asciz "psq_stux f%d, r%d, r%d, %d, %d" #0x2018
@@ -1983,78 +2044,78 @@ asm_ins_ps_sum1_:
 .asciz "ps_sum1. f%d, f%d, f%d, f%d" #0x2738
 
 asm_ins_rfi:
-.asciz "rfi" #0x2758
+.asciz "rfi"
 
 asm_ins_rlwimi:
-.asciz "rlwimi r%d, r%d, %d, %d, %d" #0x2768;
+.ascii "rlwimi"
 asm_ins_rlwimi_:
-.asciz "rlwimi. r%d, r%d, %d, %d, %d" #0x2788
+.ascii "rlwimi."
 
 asm_ins_rlwinm:
-.asciz "rlwinm r%d, r%d, %d, %d, %d" #0x27A8
+.ascii "rlwinm"
 asm_ins_rlwinm_:
-.asciz "rlwinm. r%d, r%d, %d, %d, %d" #0x27C8
+.ascii "rlwinm."
 
 asm_ins_rlwnm:
-.asciz "rlwnm r%d, r%d, r%d, %d, %d" #0x27E8
+.ascii "rlwnm"
 asm_ins_rlwnm_:
-.asciz "rlwnm. r%d, r%d, r%d, %d, %d" #0x2808
+.ascii "rlwnm."
 
 asm_ins_sc:
-.asciz "sc" #0x2828
+.asciz "sc"
 
 asm_ins_slw:
-.asciz "slw r%d, r%d, r%d" #0x2838;
+.asciz "slw r%d, r%d, r%d"
 asm_ins_slw_:
-.asciz "slw. r%d, r%d, r%d" #0x2858
+.asciz "slw. r%d, r%d, r%d"
 
 asm_ins_sraw:
-.asciz "sraw r%d, r%d, r%d" #0x2878
+.asciz "sraw r%d, r%d, r%d"
 asm_ins_sraw_:
-.asciz "sraw. r%d, r%d, r%d" #0x2898
+.asciz "sraw. r%d, r%d, r%d"
 
 asm_ins_srawi:
-.asciz "srawi r%d, r%d, %d" #0x28B8
+.ascii "srawi r%d, r%d, %d"
 asm_ins_srawi_:
-.asciz "srawi. r%d, r%d, %d" #0x28D8
+.ascii "srawi. r%d, r%d, %d"
 
 asm_ins_srw:
-.asciz "srw r%d, r%d, r%d" #0x28F8
+.asciz "srw r%d, r%d, r%d"
 asm_ins_srw_:
-.asciz "srw. r%d, r%d, r%d" #0x2918
+.asciz "srw. r%d, r%d, r%d"
 
 asm_ins_stb:
-.asciz "stb r%d, 0x%X (r%d)" #0x2938
+.ascii "stb"
 
 asm_ins_stbu:
-.asciz "stbu r%d, 0x%X (r%d)" #0x2958
+.ascii "stbu"
 
 asm_ins_stbux:
-.asciz "stbux r%d, r%d, r%d" #0x2978
+.asciz "stbux r%d, r%d, r%d"
 
 asm_ins_stbx:
-.asciz "stbx r%d, r%d, r%d" #0x2998
+.asciz "stbx r%d, r%d, r%d"
 
 asm_ins_stfd:
-.asciz "stfd f%d, 0x%X (r%d)" #0x29B8
+.ascii "stfd"
 
 asm_ins_stfdu:
-.asciz "stfdu f%d, 0x%X (r%d)" #0x29D8
+.ascii "stfdu"
 
 asm_ins_stfdux:
-.asciz "stfdux f%d, r%d, r%d" #0x29F8
+.asciz "stfdux f%d, r%d, r%d"
 
 asm_ins_stfdx:
-.asciz "stfdx f%d, r%d, r%d" #0x2A18
+.asciz "stfdx f%d, r%d, r%d"
 
 asm_ins_stfiwx:
-.asciz "stfiwx f%d, r%d, r%d" #0x2A38
+.asciz "stfiwx f%d, r%d, r%d"
 
 asm_ins_stfs:
-.asciz "stfs f%d, 0x%X (r%d)" #0x2A58
+.ascii "stfs"
 
 asm_ins_stfsu:
-.asciz "stfsu f%d, 0x%X (r%d)" #0x2A78
+.ascii "stfsu"
 
 asm_ins_stfsux:
 .asciz "stfsux f%d, r%d, r%d" #0x2A98
@@ -2063,13 +2124,13 @@ asm_ins_stfsx:
 .asciz "stfsx f%d, r%d, r%d" #0x2AB8
 
 asm_ins_sth:
-.asciz "sth r%d, 0x%X (r%d)" #0x2AD8
+.ascii "sth"
 
 asm_ins_sthbrx:
 .asciz "sthbrx r%d, r%d, r%d" #0x2AF8
 
 asm_ins_sthu:
-.asciz "sthu r%d, 0x%X (r%d)" #0x2B18
+.ascii "sthu"
 
 asm_ins_sthux:
 .asciz "sthux r%d, r%d, r%d" #0x2B38
@@ -2078,16 +2139,16 @@ asm_ins_sthx:
 .asciz "sthx r%d, r%d, r%d" #0x2B58
 
 asm_ins_stmw:
-.asciz "stmw r%d, 0x%X (r%d)" #0x2B78
+.ascii "stmw"
 
 asm_ins_stswi:
-.asciz "stswi r%d, r%d, %d" #0x2B98
+.ascii "stswi"
 
 asm_ins_stswx:
 .asciz "stswx r%d, r%d, r%d" #0x2BB8
 
 asm_ins_stw:
-.asciz "stw r%d, 0x%X (r%d)" #0x2BD8
+.ascii "stw"
 
 asm_ins_stwbrx:
 .asciz "stwbrx r%d, r%d, r%d" #0x2BF8
@@ -2096,13 +2157,13 @@ asm_ins_stwcx_:
 .asciz "stwcx. r%d, r%d, r%d" #0x2C18
 
 asm_ins_stwu:
-.asciz "stwu r%d, 0x%X (r%d)" #0x2C38
+.ascii "stwu"
 
 asm_ins_stwux:
-.asciz "stwux r%d, r%d, r%d" #0x2C58
+.asciz "stwux r%d, r%d, r%d"
 
 asm_ins_stwx:
-.asciz "stwx r%d, r%d, r%d" #0x2C78
+.asciz "stwx r%d, r%d, r%d"
 
 asm_ins_subf:
 .asciz "subf r%d, r%d, r%d"
@@ -2152,9 +2213,7 @@ asm_ins_subfeo_:
 .asciz "subfeo. r%d, r%d, r%d"
 
 asm_ins_subfic:
-.asciz "subfic r%d, r%d, 0x%X"
-asm_ins_subficDEC:
-.asciz "subfic r%d, r%d, %d"
+.ascii "subfic"
 
 asm_ins_subfme:
 .asciz "subfme r%d, r%d"
@@ -2187,12 +2246,10 @@ asm_ins_trap: #Simplified mnemonic for tw 31, rA, rB
 .asciz "trap"
 
 asm_ins_tw:
-.asciz "tw %d, r%d, r%d"
+.ascii "tw %d, r%d, r%d"
 
 asm_ins_twi:
-.asciz "twi %d, r%d, 0x%X"
-asm_ins_twiDEC:
-.asciz "twi %d, r%d, %d"
+.ascii "twi"
 
 asm_ins_xor:
 .asciz "xor r%d, r%d, r%d"
@@ -2200,10 +2257,10 @@ asm_ins_xor_:
 .asciz "xor. r%d, r%d, r%d"
 
 asm_ins_xori:
-.asciz "xori r%d, r%d, 0x%X"
+.ascii "xori"
 
 asm_ins_xoris:
-.asciz "xoris r%d, r%d, 0x%X"
+.ascii "xoris"
 
 #Following are mfspr simplified mnemonics, rather have these in a group than placed in alphabetically
 asm_ins_mfxer:
@@ -3722,7 +3779,13 @@ asm_ins_blrl:
 
 #No valid instruction
 asm_invalid_instruction:
-.asciz ".long 0x%08X"
+.ascii ".long"
+
+hexc_only_end:
+.asciz "0x%X"
+hexl_only_end:
+.asciz "0x%x"
+
 .align 2
 
 asm_table:
@@ -7568,7 +7631,7 @@ mr r3, r31
 li r5, 4
 bl memcmp
 cmpwi r3, 0
-bne- try_bdnzflr_ll 
+bne- try_bdnzflr_ll
 
 lwz r3, 0x2B4 (r29)
 b epilogue_main_asm
@@ -8935,7 +8998,7 @@ mr r3, r31
 li r5, 3
 bl memcmp
 cmpwi r3, 0
-bne- try_add 
+bne- try_add
 
 lwz r3, 0x2BC (r29)
 b epilogue_main_asm
@@ -9110,23 +9173,26 @@ b epilogue_main_asm
 #Check for addi
 try_addi:
 addi r4, r29, asm_ins_addi - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_subi
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_addiDEC
-
+beq- asm_addi_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_addi_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_subi
 #addi found
-process_imm_nonstoreload
-oris r3, r5, 0x3800
-b epilogue_main_asm
-
-#Check for addi DEC
-try_addiDEC:
-addi r4, r29, asm_ins_addiDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_subi
-
-#addi DEC found
+asm_addi_found:
 process_imm_nonstoreload
 oris r3, r5, 0x3800
 b epilogue_main_asm
@@ -9134,23 +9200,26 @@ b epilogue_main_asm
 #Check for subi
 try_subi:
 addi r4, r29, asm_ins_subi - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_addic
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_subiDEC
-
+beq- asm_subi_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_subi_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_addic
 #subi found
-processSUBTRACT_imm_nonstoreload
-oris r3, r5, 0x3800
-b epilogue_main_asm
-
-#Check for subi DEC
-try_subiDEC:
-addi r4, r29, asm_ins_subiDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_addic
-
-#subi DEC found
+asm_subi_found:
 processSUBTRACT_imm_nonstoreload
 oris r3, r5, 0x3800
 b epilogue_main_asm
@@ -9158,23 +9227,26 @@ b epilogue_main_asm
 #Check for addic
 try_addic:
 addi r4, r29, asm_ins_addic - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_subic
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_addicDEC
-
+beq- asm_addic_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_addic_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_subic
 #addic found
-process_imm_nonstoreload
-oris r3, r5, 0x3000
-b epilogue_main_asm
-
-#Check for addicDEC
-try_addicDEC:
-addi r4, r29, asm_ins_addicDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_subic
-
-#addic DEC found
+asm_addic_found:
 process_imm_nonstoreload
 oris r3, r5, 0x3000
 b epilogue_main_asm
@@ -9182,23 +9254,26 @@ b epilogue_main_asm
 #Check for subic
 try_subic:
 addi r4, r29, asm_ins_subic - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_addic_
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_subicDEC
-
+beq- asm_subic_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_subic_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_addic_
 #subic found
-processSUBTRACT_imm_nonstoreload
-oris r3, r5, 0x3000
-b epilogue_main_asm
-
-#Check for subicDEC
-try_subicDEC:
-addi r4, r29, asm_ins_subicDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_addic_
-
-#subicDEC found
+asm_subic_found:
 processSUBTRACT_imm_nonstoreload
 oris r3, r5, 0x3000
 b epilogue_main_asm
@@ -9206,23 +9281,26 @@ b epilogue_main_asm
 #Check for addic.
 try_addic_:
 addi r4, r29, asm_ins_addic_ - asm_table_start
-call_sscanf_three
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_subic_
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_addic_DEC
-
+beq- asm_addicRC_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_addicRC_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_subic_
 #addic. found
-process_imm_nonstoreload
-oris r3, r5, 0x3400
-b epilogue_main_asm
-
-#Check for addic.DEC
-try_addic_DEC:
-addi r4, r29, asm_ins_addic_DEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_subic_
-
-#addic.DEC found
+asm_addicRC_found:
 process_imm_nonstoreload
 oris r3, r5, 0x3400
 b epilogue_main_asm
@@ -9230,23 +9308,26 @@ b epilogue_main_asm
 #Check for subic.
 try_subic_:
 addi r4, r29, asm_ins_subic_ - asm_table_start
-call_sscanf_three
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_addis
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_subic_DEC
-
+beq- asm_subicRC_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_subicRC_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_addis
 #subic. found
-processSUBTRACT_imm_nonstoreload
-oris r3, r5, 0x3400
-b epilogue_main_asm
-
-#Check for subic.DEC
-try_subic_DEC:
-addi r4, r29, asm_ins_subic_DEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_addis
-
-#subic.DEC found
+asm_subicRC_found:
 processSUBTRACT_imm_nonstoreload
 oris r3, r5, 0x3400
 b epilogue_main_asm
@@ -9254,48 +9335,55 @@ b epilogue_main_asm
 #Check for addis
 try_addis:
 addi r4, r29, asm_ins_addis - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_subis
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_addisDEC
-
+beq- asm_addis_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_addis_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_subis
 #addis found
+asm_addis_found:
 process_addis
 oris r3, r5, 0x3C00
 b epilogue_main_asm
 
-#Check for addisDEC
-try_addisDEC:
-addi r4, r29, asm_ins_addisDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_subis
-
-#addisDEC found
-process_imm_nonstoreload
-oris r3, r5, 0x3C00
-b epilogue_main_asm
 
 #Check for subis
 try_subis:
 addi r4, r29, asm_ins_subis - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_addme
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_subisDEC
-
+beq- asm_subis_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_subis_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_addme
 #subis found
+asm_subis_found:
 process_subis
-oris r3, r5, 0x3C00
-b epilogue_main_asm
-
-#Check for subisDEC
-try_subisDEC:
-addi r4, r29, asm_ins_subisDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_addme
-
-#subisDEC found
-processSUBTRACT_imm_nonstoreload
 oris r3, r5, 0x3C00
 b epilogue_main_asm
 
@@ -9466,11 +9554,26 @@ b epilogue_main_asm
 #Check for andi.
 try_andi_:
 addi r4, r29, asm_ins_andi_ - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_andis_
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_andis_
-
+beq- asm_andiRC_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_andiRC_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_andis_
 #andi. found
+asm_andiRC_found:
 process_imm_logical
 oris r3, r5, 0x7000
 b epilogue_main_asm
@@ -9478,11 +9581,26 @@ b epilogue_main_asm
 #Check for andis.
 try_andis_:
 addi r4, r29, asm_ins_andis_ - asm_table_start
-call_sscanf_three
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_b
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_b
-
+beq- asm_andisRC_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_andisRC_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_b
 #andis. found
+asm_andisRC_found:
 process_imm_logical
 oris r3, r5, 0x7400
 b epilogue_main_asm
@@ -9676,45 +9794,26 @@ b epilogue_main_asm
 #Check for cmpi
 try_cmpi:
 addi r4, r29, asm_ins_cmpi - asm_table_start
-call_sscanf_four
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cmpl
+addi r4, r29, cr_d_r_hexc_end - asm_table_start
+call_sscanf_four_multi
 cmpwi r3, 4
-bne- try_cmpiDEC
-
+beq- asm_cmpi_found
+addi r4, r29, cr_d_r_hexl_end - asm_table_start
+call_sscanf_four_multi
+cmpwi r3, 4
+beq- asm_cmpi_found
+addi r4, r29, cr_d_r_simm_end - asm_table_start
+call_sscanf_four_multi
+cmpwi r3, 4
+bne+ try_cmpl
 #cmpi found
-lwz r5, 0x8 (sp) #crF
-cmplwi r5, 7
-bgt- epilogue_error
-lwz r6, 0xC (sp) #L
-cmpwi r6, 0
-bne- epilogue_error
-lwz r7, 0x10 (sp) #rA
-cmplwi r7, 31
-bgt- epilogue_error
-lwz r8, 0x14 (sp) #SIMM
-cmplwi r8, 0x7FFF #Yes, We want logical comparison for this
-ble+ 0x14
-#Make sure 32-bit SIMM is a legit negative 16-bit value (0xFFFF----)
-srwi r0, r8, 16
-cmplwi r0, 0xFFFF
-bne- epilogue_error
-clrlwi r8, r8, 16
-slwi r5, r5, 23
-slwi r6, r6, 21 #TODO remove me, not needed
-slwi r7, r7, 16
-or r5, r5, r6 #TODO remove me not needed
-or r5, r5, r7
-or r5, r5, r8 #No shifting needed for imm
-oris r3, r5, 0x2C00
-b epilogue_main_asm
-
-#Check for cmpiDEC
-try_cmpiDEC:
-addi r4, r29, asm_ins_cmpiDEC - asm_table_start
-call_sscanf_four
-cmpwi r3, 4
-bne- try_cmpl
-
-#cmpiDEC found
+asm_cmpi_found:
 lwz r5, 0x8 (sp) #crF
 cmplwi r5, 7
 bgt- epilogue_error
@@ -9775,40 +9874,26 @@ b epilogue_main_asm
 #Check for cmpli
 try_cmpli:
 addi r4, r29, asm_ins_cmpli - asm_table_start
-call_sscanf_four
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cmpw
+addi r4, r29, cr_d_r_hexc_end - asm_table_start
+call_sscanf_four_multi
 cmpwi r3, 4
-bne- try_cmpliDEC
-
+beq- asm_cmpli_found
+addi r4, r29, cr_d_r_hexl_end - asm_table_start
+call_sscanf_four_multi
+cmpwi r3, 4
+beq- asm_cmpli_found
+addi r4, r29, cr_d_r_uimm_end - asm_table_start
+call_sscanf_four_multi
+cmpwi r3, 4
+bne+ try_cmpw
 #cmpli found
-lwz r5, 0x8 (sp) #crF
-cmplwi r5, 7
-bgt- epilogue_error
-lwz r6, 0xC (sp) #L
-cmpwi r6, 0
-bne- epilogue_error
-lwz r7, 0x10 (sp) #rA
-cmplwi r7, 31
-bgt- epilogue_error
-lwz r8, 0x14 (sp) #UIMM
-cmplwi r8, 0xFFFF
-bgt- epilogue_error
-slwi r5, r5, 23
-slwi r6, r6, 21 #TODO remove me
-slwi r7, r7, 16
-or r5, r5, r6 #TODO remove me
-or r5, r5, r7
-or r5, r5, r8
-oris r3, r5, 0x2800
-b epilogue_main_asm
-
-#Check for cmpliDEC
-try_cmpliDEC:
-addi r4, r29, asm_ins_cmpliDEC - asm_table_start
-call_sscanf_four
-cmpwi r3, 4
-bne- try_cmpw
-
-#cmpliDEC found
+asm_cmpli_found:
 lwz r5, 0x8 (sp) #crF
 cmplwi r5, 7
 bgt- epilogue_error
@@ -9858,40 +9943,26 @@ b epilogue_main_asm
 #Check for cmpwi
 try_cmpwi:
 addi r4, r29, asm_ins_cmpwi - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cmplw
+addi r4, r29, cr_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_cmpwiDEC
-
+beq- asm_cmpwi_found
+addi r4, r29, cr_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_cmpwi_found
+addi r4, r29, cr_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_cmplw
 #cmpwi found
-lwz r5, 0x8 (sp) #crF
-cmplwi r5, 7
-bgt- epilogue_error
-lwz r6, 0xC (sp) #rA
-cmpwi r6, 31
-bgt- epilogue_error
-lwz r7, 0x10 (sp) #SIMM
-cmplwi r7, 0x7FFF #Yes, We want logical comparison for this
-ble+ 0x14
-#Make sure 32-bit SIMM is a legit negative 16-bit value (0xFFFF----)
-srwi r0, r7, 16
-cmplwi r0, 0xFFFF
-bne- epilogue_error
-clrlwi r7, r7, 16
-slwi r5, r5, 23
-slwi r6, r6, 16
-or r5, r5, r6
-or r5, r5, r7
-oris r3, r5, 0x2C00
-b epilogue_main_asm
-
-#Check for cmpwiDEC
-try_cmpwiDEC:
-addi r4, r29, asm_ins_cmpwiDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_cmplw
-
-#cmpwiDEC found
+asm_cmpwi_found:
 lwz r5, 0x8 (sp) #crF
 cmplwi r5, 7
 bgt- epilogue_error
@@ -9942,35 +10013,26 @@ b epilogue_main_asm
 #Check for cmplwi
 try_cmplwi:
 addi r4, r29, asm_ins_cmplwi - asm_table_start
-call_sscanf_three
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cmpw_cr0
+addi r4, r29, cr_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_cmplwiDEC
-
+beq- asm_cmplwi_found
+addi r4, r29, cr_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_cmplwi_found
+addi r4, r29, cr_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_cmpw_cr0
 #cmplwi found
-lwz r5, 0x8 (sp) #crF
-cmplwi r5, 7
-bgt- epilogue_error
-lwz r6, 0xC (sp) #rA
-cmpwi r6, 31
-bgt- epilogue_error
-lwz r7, 0x10 (sp) #UIMM
-cmplwi r7, 0xFFFF
-bgt- epilogue_error
-slwi r5, r5, 23
-slwi r6, r6, 16
-or r5, r5, r6
-or r5, r5, r7 #No shifting needed for UIMM
-oris r3, r5, 0x2800
-b epilogue_main_asm
-
-#Check for cmplwiDEC
-try_cmplwiDEC:
-addi r4, r29, asm_ins_cmplwiDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_cmpw_cr0
-
-#cmplwiDEC found
+asm_cmplwi_found:
 lwz r5, 0x8 (sp) #crF
 cmplwi r5, 7
 bgt- epilogue_error
@@ -10009,36 +10071,27 @@ b epilogue_main_asm
 
 #Check for cr0'd cmpwi
 try_cmpwi_cr0:
-addi r4, r29, asm_ins_cmpwi_cr0 - asm_table_start
-call_sscanf_two
+addi r4, r29, asm_ins_cmpwi - asm_table_start
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cmplw_cr0
+addi r4, r29, r_hexc_end - asm_table_start
+call_sscanf_two_multi
 cmpwi r3, 2
-bne- try_cmpwi_cr0DEC
-
+beq- asm_cmpwi_cr0_found
+addi r4, r29, r_hexl_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+beq- asm_cmpwi_cr0_found
+addi r4, r29, r_simm_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+bne+ try_cmplw_cr0
 #cr0'd cmpwi found
-lwz r5, 0x8 (sp) #rA
-cmpwi r5, 31
-bgt- epilogue_error
-lwz r6, 0xC (sp) #SIMM
-cmplwi r6, 0x7FFF #Yes, We want logical comparison for this
-ble+ 0x14
-#Make sure 32-bit SIMM is a legit negative 16-bit value (0xFFFF----)
-srwi r0, r6, 16
-cmplwi r0, 0xFFFF
-bne- epilogue_error
-clrlwi r6, r6, 16
-slwi r5, r5, 16
-or r5, r5, r6 #No shifting needed for SIMM
-oris r3, r5, 0x2C00
-b epilogue_main_asm
-
-#Check for cr0'd cmpwiDEC
-try_cmpwi_cr0DEC:
-addi r4, r29, asm_ins_cmpwi_cr0DEC - asm_table_start
-call_sscanf_two
-cmpwi r3, 2
-bne- try_cmplw_cr0
-
-#cr0'dDEC cmpwi found
+asm_cmpwi_cr0_found:
 lwz r5, 0x8 (sp) #rA
 cmpwi r5, 31
 bgt- epilogue_error
@@ -10078,31 +10131,27 @@ b epilogue_main_asm
 
 #Check for cr0'd cmplwi
 try_cmplwi_cr0:
-addi r4, r29, asm_ins_cmplwi_cr0 - asm_table_start
-call_sscanf_two
+addi r4, r29, asm_ins_cmplwi - asm_table_start
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_cntlzw
+addi r4, r29, r_hexc_end - asm_table_start
+call_sscanf_two_multi
 cmpwi r3, 2
-bne- try_cmplwi_cr0DEC
-
+beq- asm_cmplwi_cr0_found
+addi r4, r29, r_hexl_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+beq- asm_cmplwi_cr0_found
+addi r4, r29, r_uimm_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+bne+ try_cntlzw
 #cr0'd cmplwi found
-lwz r5, 0x8 (sp) #rA
-cmpwi r5, 31
-bgt- epilogue_error
-lwz r6, 0xC (sp) #UIMM
-cmplwi r6, 0xFFFF
-bgt- epilogue_error
-slwi r5, r5, 16
-or r5, r5, r6 #No shifting needed for UIMM
-oris r3, r5, 0x2800
-b epilogue_main_asm
-
-#Check for cr0'd cmplwiDEC
-try_cmplwi_cr0DEC:
-addi r4, r29, asm_ins_cmplwi_cr0DEC - asm_table_start
-call_sscanf_two
-cmpwi r3, 2
-bne- try_cntlzw
-
-#cr0'd cmplwi DECfound
+asm_cmplwi_cr0_found:
 lwz r5, 0x8 (sp) #rA
 cmpwi r5, 31
 bgt- epilogue_error
@@ -10568,7 +10617,7 @@ b epilogue_main_asm
 try_eieio:
 addi r4, r29, asm_ins_eieio - asm_table_start
 mr r3, r31
-li r5, 5
+li r5, 6
 bl memcmp
 cmpwi r3, 0
 bne- try_eqv
@@ -11402,7 +11451,7 @@ b epilogue_main_asm
 try_isync:
 addi r4, r29, asm_ins_isync - asm_table_start
 mr r3, r31
-li r5, 5
+li r5, 6
 bl memcmp
 cmpwi r3, 0
 bne- try_lbz
@@ -11414,11 +11463,26 @@ b epilogue_main_asm
 #Check for lbz
 try_lbz:
 addi r4, r29, asm_ins_lbz - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lbzu
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lbzu
-
+beq- asm_lbz_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lbz_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lbzu
 #lbz found
+asm_lbz_found:
 process_imm_storeload
 oris r3, r5, 0x8800
 b epilogue_main_asm
@@ -11426,11 +11490,26 @@ b epilogue_main_asm
 #Check for lbzu
 try_lbzu:
 addi r4, r29, asm_ins_lbzu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lbzux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lbzux
-
+beq- asm_lbzu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lbzu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lbzux
 #lbzu found
+asm_lbzu_found:
 process_imm_int_load_update
 oris r3, r5, 0x8C00
 b epilogue_main_asm
@@ -11464,11 +11543,26 @@ b epilogue_main_asm
 #Check for lfd
 try_lfd:
 addi r4, r29, asm_ins_lfd - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lfdu
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lfdu
-
+beq- asm_lfd_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lfd_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lfdu
 #lfd found
+asm_lfd_found:
 process_imm_storeload
 oris r3, r5, 0xC800
 b epilogue_main_asm
@@ -11476,11 +11570,26 @@ b epilogue_main_asm
 #Check for lfdu
 try_lfdu:
 addi r4, r29, asm_ins_lfdu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lfdux
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lfdux
-
+beq- asm_lfdu_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lfdu_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lfdux
 #lfdu found
+asm_lfdu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0xCC00
 b epilogue_main_asm
@@ -11514,11 +11623,26 @@ b epilogue_main_asm
 #Check for lfs
 try_lfs:
 addi r4, r29, asm_ins_lfs - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lfsu
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lfsu
-
+beq- asm_lfs_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lfs_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lfsu
 #lfs found
+asm_lfs_found:
 process_imm_storeload
 oris r3, r5, 0xC000
 b epilogue_main_asm
@@ -11526,11 +11650,26 @@ b epilogue_main_asm
 #Check for lfsu
 try_lfsu:
 addi r4, r29, asm_ins_lfsu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lfsux
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lfsux
-
+beq- asm_lfsu_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lfsu_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lfsux
 #lfsu found
+asm_lfsu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0xC400
 b epilogue_main_asm
@@ -11564,11 +11703,26 @@ b epilogue_main_asm
 #Check for lha
 try_lha:
 addi r4, r29, asm_ins_lha - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lhau
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lhau
-
+beq- asm_lha_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lha_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lhau
 #lha found
+asm_lha_found:
 process_imm_storeload
 oris r3, r5, 0xA800
 b epilogue_main_asm
@@ -11576,11 +11730,26 @@ b epilogue_main_asm
 #Check for lhau
 try_lhau:
 addi r4, r29, asm_ins_lhau - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lhaux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lhaux
-
+beq- asm_lhau_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lhau_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lhaux
 #lhau found
+asm_lhau_found:
 process_imm_int_load_update
 oris r3, r5, 0xAC00
 b epilogue_main_asm
@@ -11627,11 +11796,26 @@ b epilogue_main_asm
 #Check for lhz
 try_lhz:
 addi r4, r29, asm_ins_lhz - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lhzu
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lhzu
-
+beq- asm_lhz_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lhz_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lhzu
 #lhz found
+asm_lhz_found:
 process_imm_storeload
 oris r3, r5, 0xA000
 b epilogue_main_asm
@@ -11639,11 +11823,26 @@ b epilogue_main_asm
 #Check for lhzu
 try_lhzu:
 addi r4, r29, asm_ins_lhzu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lhzux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lhzux
-
+beq- asm_lhzu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lhzu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lhzux
 #lhzu found
+asm_lhzu_found:
 process_imm_int_load_update
 oris r3, r5, 0xA400
 b epilogue_main_asm
@@ -11677,35 +11876,26 @@ b epilogue_main_asm
 #Check for li
 try_li:
 addi r4, r29, asm_ins_li - asm_table_start
-call_sscanf_two
+li r5, 2
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lis
+addi r4, r29, r_hexc_end - asm_table_start
+call_sscanf_two_multi
 cmpwi r3, 2
-bne- try_liDEC
-
+beq- asm_li_found
+addi r4, r29, r_hexl_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+beq- asm_li_found
+addi r4, r29, r_simm_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+bne+ try_lis
 #li found
-lwz r5, 0x8 (sp) #rD
-cmplwi r5, 31
-bgt- epilogue_error
-lwz r6, 0xC (sp) #SIMM
-cmplwi r6, 0x7FFF #Yes, We want logical comparison for this
-ble+ 0x14
-#Make sure 32-bit SIMM is a legit negative 16-bit value (0xFFFF----)
-srwi r0, r6, 16
-cmplwi r0, 0xFFFF
-bne- epilogue_error
-clrlwi r6, r6, 16
-slwi r5, r5, 21
-or r5, r5, r6
-oris r3, r5, 0x3800
-b epilogue_main_asm
-
-#Check for liDEC
-try_liDEC:
-addi r4, r29, asm_ins_liDEC - asm_table_start
-call_sscanf_two
-cmpwi r3, 2
-bne- try_lis
-
-#liDEC found
+asm_li_found:
 lwz r5, 0x8 (sp) #rD
 cmplwi r5, 31
 bgt- epilogue_error
@@ -11725,30 +11915,26 @@ b epilogue_main_asm
 #Check for lis
 try_lis:
 addi r4, r29, asm_ins_lis - asm_table_start
-call_sscanf_two
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lmw
+addi r4, r29, r_hexc_end - asm_table_start
+call_sscanf_two_multi
 cmpwi r3, 2
-bne- try_lisDEC
-
+beq- asm_lis_found
+addi r4, r29, r_hexl_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+beq- asm_lis_found
+addi r4, r29, r_uimm_end - asm_table_start
+call_sscanf_two_multi
+cmpwi r3, 2
+bne+ try_lmw
 #lis found
-lwz r5, 0x8 (sp) #rD
-cmplwi r5, 31
-bgt- epilogue_error
-lwz r6, 0xC (sp) #UIMM, yes this is UIMM
-cmplwi r6, 0xFFFF
-bgt- epilogue_error
-slwi r5, r5, 21
-or r5, r5, r6
-oris r3, r5, 0x3C00
-b epilogue_main_asm
-
-#Check for lisDEC
-try_lisDEC:
-addi r4, r29, asm_ins_lisDEC - asm_table_start
-call_sscanf_two
-cmpwi r3, 2
-bne- try_lmw
-
-#lisDEC found
+asm_lis_found:
 lwz r5, 0x8 (sp) #rD
 cmplwi r5, 31
 bgt- epilogue_error
@@ -11763,11 +11949,26 @@ b epilogue_main_asm
 #Check for lmw
 try_lmw:
 addi r4, r29, asm_ins_lmw - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lswi
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lswi
-
+beq- asm_lmw_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lmw_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lswi
 #lmw found
+asm_lmw_found:
 lwz r5, 0x8 (sp) #rD
 cmplwi r5, 31
 bgt- epilogue_error
@@ -11794,12 +11995,27 @@ b epilogue_main_asm
 #Check for lswi
 try_lswi:
 addi r4, r29, asm_ins_lswi - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lswx
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lswx
-
+beq- asm_lswi_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lswi_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lswx
 #lswi found
 #Notice: we CANNOT use a similar check method for lswx, because it's simply impossible to know the value that will be contained within rB itself of lswx
+asm_lswi_found:
 lwz r5, 0x8 (sp) #rD
 cmplwi r5, 31
 bgt- epilogue_error
@@ -11874,11 +12090,26 @@ b epilogue_main_asm
 #Check for lwz
 try_lwz:
 addi r4, r29, asm_ins_lwz - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lwzu
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lwzu
-
+beq- asm_lwz_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lwz_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lwzu
 #lwz found
+asm_lwz_found:
 process_imm_storeload
 oris r3, r5, 0x8000
 b epilogue_main_asm
@@ -11886,11 +12117,26 @@ b epilogue_main_asm
 #Check for lwzu
 try_lwzu:
 addi r4, r29, asm_ins_lwzu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_lwzux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_lwzux
-
+beq- asm_lwzu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_lwzu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_lwzux
 #lwzu found
+asm_lwzu_found:
 process_imm_int_load_update
 oris r3, r5, 0x8400
 b epilogue_main_asm
@@ -11920,13 +12166,6 @@ process_three_items_left_aligned
 lwz r0, 0x13C (r29)
 or r3, r0, r5
 b epilogue_main_asm
-
-####NOTE: This code is so f**king big, that I have to place the following branch destination (epilogue_error) here. If I don't there will be at least 18 instances where the branch to epilogue_error will exceed the 16-bit branch-conditional signed limit (0x7FFC). Holy moly. Placing it close enough to center. Now max branch amounts in the source shouldn't even come close to 0x7FFC.
-
-#Source line cannot be compiled due to bad format or an item was out of range
-epilogue_error:
-li r3, -4
-b epilogue_final
 
 #Check for mcrf
 try_mcrf:
@@ -13123,6 +13362,13 @@ cmplwi r5, 31
 bgt- epilogue_error
 li r6, 1022
 b proceed_mfspr
+
+#### NOTE: This code is so f**king big, that I have to place the following branch destination (epilogue_error) here. If I don't there will be instances where the conditional branch to epilogue_error will exceed the 16-bit branch-conditional signed limit (0x7FFC). Holy moly. Placing it close enough to center. Now max branch amounts in the source shouldn't even come close to 0x7FFC.
+
+#Source line cannot be compiled due to bad format or an item was out of range
+epilogue_error:
+li r3, -4
+b epilogue_final
 
 #Check for mfspr
 try_mfspr:
@@ -15007,23 +15253,26 @@ b epilogue_main_asm
 #Check for mulli
 try_mulli:
 addi r4, r29, asm_ins_mulli - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_mullw
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_mulliDEC
-
+beq- asm_mulli_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_mulli_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_mullw
 #mulli found
-process_imm_nonstoreload
-oris r3, r5, 0x1C00
-b epilogue_main_asm
-
-#Check for mulliDEC
-try_mulliDEC:
-addi r4, r29, asm_ins_mulliDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_mullw
-
-#mulli DECfound
+asm_mulli_found:
 process_imm_nonstoreload
 oris r3, r5, 0x1C00
 b epilogue_main_asm
@@ -15169,7 +15418,7 @@ b epilogue_main_asm
 try_nop:
 addi r4, r29, asm_ins_nop - asm_table_start
 mr r3, r31
-li r5, 3
+li r5, 4
 bl memcmp
 cmpwi r3, 0
 bne- try_nor
@@ -15289,11 +15538,26 @@ b epilogue_main_asm
 #Check for ori
 try_ori:
 addi r4, r29, asm_ins_ori - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_oris
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_oris
-
+beq- asm_ori_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_ori_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_oris
 #ori found
+asm_ori_found:
 process_imm_logical
 oris r3, r5, 0x6000
 b epilogue_main_asm
@@ -15301,11 +15565,26 @@ b epilogue_main_asm
 #Check for oris
 try_oris:
 addi r4, r29, asm_ins_oris - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_psq_l
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_psq_l
-
+beq- asm_oris_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_oris_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_psq_l
 #oris found
+asm_oris_found:
 process_imm_logical
 oris r3, r5, 0x6400
 b epilogue_main_asm
@@ -15313,11 +15592,26 @@ b epilogue_main_asm
 #Check for psq_l
 try_psq_l:
 addi r4, r29, asm_ins_psq_l - asm_table_start
-call_sscanf_five
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_psq_lu
+addi r4, r29, f_hexc_r_d_d_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_psq_lu
-
+beq- asm_psq_l_found
+addi r4, r29, f_hexl_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_psq_l_found
+addi r4, r29, f_simm_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_psq_lu
 #psq_l found
+asm_psq_l_found:
 process_imm_psq
 oris r3, r5, 0xE000
 b epilogue_main_asm
@@ -15325,11 +15619,26 @@ b epilogue_main_asm
 #Check for psq_lu
 try_psq_lu:
 addi r4, r29, asm_ins_psq_lu - asm_table_start
-call_sscanf_five
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_psq_lux
+addi r4, r29, f_hexc_r_d_d_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_psq_lux
-
+beq- asm_psq_lu_found
+addi r4, r29, f_hexl_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_psq_lu_found
+addi r4, r29, f_simm_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_psq_lux
 #psq_lu found
+asm_psq_lu_found:
 process_imm_psq_update
 oris r3, r5, 0xE400
 b epilogue_main_asm
@@ -15363,11 +15672,26 @@ b epilogue_main_asm
 #Check for psq_st
 try_psq_st:
 addi r4, r29, asm_ins_psq_st - asm_table_start
-call_sscanf_five
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_psq_stu
+addi r4, r29, f_hexc_r_d_d_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_psq_stu
-
+beq- asm_psq_st_found
+addi r4, r29, f_hexl_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_psq_st_found
+addi r4, r29, f_simm_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_psq_stu
 #psq_st found
+asm_psq_st_found:
 process_imm_psq
 oris r3, r5, 0xF000
 b epilogue_main_asm
@@ -15375,11 +15699,26 @@ b epilogue_main_asm
 #Check for psq_stu
 try_psq_stu:
 addi r4, r29, asm_ins_psq_stu - asm_table_start
-call_sscanf_five
+li r5, 7
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_psq_stux
+addi r4, r29, f_hexc_r_d_d_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_psq_stux
-
+beq- asm_psq_stu_found
+addi r4, r29, f_hexl_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_psq_stu_found
+addi r4, r29, f_simm_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_psq_stux
 #psq_stu found
+asm_psq_stu_found:
 process_imm_psq_update
 oris r3, r5, 0xF400
 b epilogue_main_asm
@@ -16140,7 +16479,7 @@ b epilogue_main_asm
 try_rfi:
 addi r4, r29, asm_ins_rfi - asm_table_start
 mr r3, r31
-li r5, 3
+li r5, 4
 bl memcmp
 cmpwi r3, 0
 bne- try_rlwimi
@@ -16152,11 +16491,26 @@ b epilogue_main_asm
 #Check for rlwimi
 try_rlwimi:
 addi r4, r29, asm_ins_rlwimi - asm_table_start
-call_sscanf_five
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_rlwimi_
+addi r4, r29, r_r_hexc_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_rlwimi_
-
+beq- asm_rlwimi_found
+addi r4, r29, r_r_hexl_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwimi_found
+addi r4, r29, r_r_d_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_rlwimi_
 #rlwimi found
+asm_rlwimi_found:
 process_five_items
 oris r3, r5, 0x5000
 b epilogue_main_asm
@@ -16164,11 +16518,26 @@ b epilogue_main_asm
 #Check for rlwimi.
 try_rlwimi_:
 addi r4, r29, asm_ins_rlwimi_ - asm_table_start
-call_sscanf_five
+li r5, 7
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_slwi
+addi r4, r29, r_r_hexc_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_slwi
-
+beq- asm_rlwimiRC_found
+addi r4, r29, r_r_hexl_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwimiRC_found
+addi r4, r29, r_r_d_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_slwi
 #rlwimi. found
+asm_rlwimiRC_found:
 process_five_items
 oris r3, r5, 0x5000
 ori r3, r3, asm_rc
@@ -16493,11 +16862,26 @@ b epilogue_main_asm
 #Check for rlwinm
 try_rlwinm:
 addi r4, r29, asm_ins_rlwinm - asm_table_start
-call_sscanf_five
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_rlwinm_
+addi r4, r29, r_r_hexc_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_rlwinm_
-
+beq- asm_rlwinm_found
+addi r4, r29, r_r_hexl_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwinm_found
+addi r4, r29, r_r_d_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_rlwinm_
 #rlwinm found
+asm_rlwinm_found:
 process_five_items
 oris r3, r5, 0x5400
 b epilogue_main_asm
@@ -16505,11 +16889,26 @@ b epilogue_main_asm
 #Check for rlwinm.
 try_rlwinm_:
 addi r4, r29, asm_ins_rlwinm_ - asm_table_start
-call_sscanf_five
+li r5, 7
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_rotlw
+addi r4, r29, r_r_hexc_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_rotlw
-
+beq- asm_rlwinmRC_found
+addi r4, r29, r_r_hexl_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwinmRC_found
+addi r4, r29, r_r_d_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_rotlw
 #rlwinm. found
+asm_rlwinmRC_found:
 process_five_items
 oris r3, r5, 0x5400
 ori r3, r3, asm_rc
@@ -16575,11 +16974,26 @@ b epilogue_main_asm
 #Check for rlwnm
 try_rlwnm:
 addi r4, r29, asm_ins_rlwnm - asm_table_start
-call_sscanf_five
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_rlwnm_
+addi r4, r29, r_r_r_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_rlwnm_
-
+beq- asm_rlwnm_found
+addi r4, r29, r_r_r_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwnm_found
+addi r4, r29, r_r_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_rlwnm_
 #rlwnm found
+asm_rlwnm_found:
 process_five_items
 oris r3, r5, 0x5C00
 b epilogue_main_asm
@@ -16587,11 +17001,26 @@ b epilogue_main_asm
 #Check for rlwnm.
 try_rlwnm_:
 addi r4, r29, asm_ins_rlwnm_ - asm_table_start
-call_sscanf_five
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_sc
+addi r4, r29, r_r_r_hexc_hexc_end - asm_table_start
+call_sscanf_five_multi
 cmpwi r3, 5
-bne- try_sc
-
+beq- asm_rlwnmRC_found
+addi r4, r29, r_r_r_hexl_hexl_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+beq- asm_rlwnmRC_found
+addi r4, r29, r_r_r_d_d_end - asm_table_start
+call_sscanf_five_multi
+cmpwi r3, 5
+bne+ try_sc
 #rlwnm. found
+asm_rlwnmRC_found:
 process_five_items
 oris r3, r5, 0x5C00
 ori r3, r3, asm_rc
@@ -16604,7 +17033,7 @@ mr r3, r31
 li r5, 2
 bl memcmp
 cmpwi r3, 0
-bne- try_slw
+bne+ try_slw
 
 #sc found
 lwz r3, 0x22C (r29)
@@ -16721,11 +17150,26 @@ b epilogue_main_asm
 #Check for stb
 try_stb:
 addi r4, r29, asm_ins_stb - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stbu
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stbu
-
+beq- asm_stb_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stb_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stbu
 #stb found
+asm_stb_found:
 process_imm_storeload
 oris r3, r5, 0x9800
 b epilogue_main_asm
@@ -16733,11 +17177,26 @@ b epilogue_main_asm
 #Check for stbu
 try_stbu:
 addi r4, r29, asm_ins_stbu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stbux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stbux
-
+beq- asm_stbu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stbu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stbux
 #stbu found
+asm_stbu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0x9C00
 b epilogue_main_asm
@@ -16771,23 +17230,53 @@ b epilogue_main_asm
 #Check for stfd
 try_stfd:
 addi r4, r29, asm_ins_stfd - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stfdu
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stfdu
-
+beq- asm_stfd_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stfd_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stfdu
 #stfd found
+asm_stfd_found:
 process_imm_storeload
 oris r3, r5, 0xD800
 b epilogue_main_asm
 
-#Check for stfdu
+#Check for stfdu 
 try_stfdu:
 addi r4, r29, asm_ins_stfdu - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stfdux
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stfdux
-
+beq- asm_stfdu_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stfdu_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stfdux
 #stfdu found
+asm_stfdu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0xDC00
 b epilogue_main_asm
@@ -16834,11 +17323,26 @@ b epilogue_main_asm
 #Check for stfs
 try_stfs:
 addi r4, r29, asm_ins_stfs - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stfsu
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stfsu
-
+beq- asm_stfs_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stfs_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stfsu
 #stfs found
+asm_stfs_found:
 process_imm_storeload
 oris r3, r5, 0xD000
 b epilogue_main_asm
@@ -16846,11 +17350,26 @@ b epilogue_main_asm
 #Check stfsu
 try_stfsu:
 addi r4, r29, asm_ins_stfsu - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stfsux
+addi r4, r29, f_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stfsux
-
+beq- asm_stfsu_found
+addi r4, r29, f_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stfsu_found
+addi r4, r29, f_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stfsux
 #stfsu found
+asm_stfsu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0xD400
 b epilogue_main_asm
@@ -16884,11 +17403,26 @@ b epilogue_main_asm
 #Check for sth
 try_sth:
 addi r4, r29, asm_ins_sth - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_sthbrx
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_sthbrx
-
+beq- asm_sth_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_sth_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_sthbrx
 #sth found
+asm_sth_found:
 process_imm_storeload
 oris r3, r5, 0xB000
 b epilogue_main_asm
@@ -16909,11 +17443,26 @@ b epilogue_main_asm
 #Check for sthu
 try_sthu:
 addi r4, r29, asm_ins_sthu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_sthux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_sthux
-
+beq- asm_sthu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_sthu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_sthux
 #sthu found
+asm_sthu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0xB400
 b epilogue_main_asm
@@ -16947,11 +17496,26 @@ b epilogue_main_asm
 #Check for stmw
 try_stmw:
 addi r4, r29, asm_ins_stmw - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stswi
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stswi
-
+beq- asm_stmw_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stmw_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stswi
 #stmw found
+asm_stmw_found:
 process_imm_storeload
 oris r3, r5, 0xBC00
 b epilogue_main_asm
@@ -16959,11 +17523,26 @@ b epilogue_main_asm
 #Check for stswi
 try_stswi:
 addi r4, r29, asm_ins_stswi - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stswx
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stswx
-
+beq- asm_stswi_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stswi_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stswx
 #stswi found
+asm_stswi_found:
 process_three_items_left_aligned
 lwz r0, 0x268 (r29)
 or r3, r0, r5
@@ -16985,11 +17564,26 @@ b epilogue_main_asm
 #Check for stw
 try_stw:
 addi r4, r29, asm_ins_stw - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stwbrx
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stwbrx
-
+beq- asm_stw_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stw_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stwbrx
 #stw found
+asm_stw_found:
 process_imm_storeload
 oris r3, r5, 0x9000
 b epilogue_main_asm
@@ -17023,11 +17617,26 @@ b epilogue_main_asm
 #Check for stwu
 try_stwu:
 addi r4, r29, asm_ins_stwu - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_stwux
+addi r4, r29, r_hexc_r_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_stwux
-
+beq- asm_stwu_found
+addi r4, r29, r_hexl_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_stwu_found
+addi r4, r29, r_simm_r_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_stwux
 #stwu found
+asm_stwu_found:
 process_imm_update_rAneq0
 oris r3, r5, 0x9400
 b epilogue_main_asm
@@ -17336,23 +17945,26 @@ b epilogue_main_asm
 #Check for subfic
 try_subfic:
 addi r4, r29, asm_ins_subfic - asm_table_start
-call_sscanf_three
+li r5, 6
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_subfme
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_subficDEC
-
+beq- asm_subfic_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_subfic_found
+addi r4, r29, r_r_simm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_subfme
 #subfic found
-process_imm_nonstoreload
-oris r3, r5, 0x2000
-b epilogue_main_asm
-
-#Check for subficDEC
-try_subficDEC:
-addi r4, r29, asm_ins_subficDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_subfme
-
-#subficDEC found
+asm_subfic_found:
 process_imm_nonstoreload
 oris r3, r5, 0x2000
 b epilogue_main_asm
@@ -17471,10 +18083,10 @@ b epilogue_main_asm
 try_sync:
 addi r4, r29, asm_ins_sync - asm_table_start
 mr r3, r31
-li r5, 4
+li r5, 5
 bl memcmp
 cmpwi r3, 0
-bne- try_tlbie
+bne+ try_tlbie
 
 #sync found
 lwz r3, 0x294 (r29)
@@ -17500,10 +18112,10 @@ b epilogue_main_asm
 try_tlbsync:
 addi r4, r29, asm_ins_tlbsync - asm_table_start
 mr r3, r31
-li r5, 7
+li r5, 8
 bl memcmp
 cmpwi r3, 0
-bne- try_trap
+bne+ try_trap
 
 #tlbsync found
 lwz r3, 0x29C (r29)
@@ -17513,10 +18125,10 @@ b epilogue_main_asm
 try_trap:
 addi r4, r29, asm_ins_trap - asm_table_start
 mr r3, r31
-li r5, 4
+li r5, 5
 bl memcmp
 cmpwi r3, 0
-bne- try_tw
+bne+ try_tw
 
 #trap found
 lwz r3, 0x2B0 (r29)
@@ -17538,23 +18150,26 @@ b epilogue_main_asm
 #Check for twi
 try_twi:
 addi r4, r29, asm_ins_twi - asm_table_start
-call_sscanf_three
+li r5, 3
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_xor
+addi r4, r29, d_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_twiDEC
-
+beq- asm_twi_found
+addi r4, r29, d_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_twi_found
+addi r4, r29, d_r_d_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_xor
 #twi found
-process_imm_nonstoreload
-oris r3, r5, 0x0C00
-b epilogue_main_asm
-
-#Check for twiDEC
-try_twiDEC:
-addi r4, r29, asm_ins_twiDEC - asm_table_start
-call_sscanf_three
-cmpwi r3, 3
-bne- try_xor
-
-#twiDEC found
+asm_twi_found:
 process_imm_nonstoreload
 oris r3, r5, 0x0C00
 b epilogue_main_asm
@@ -17589,11 +18204,26 @@ b epilogue_main_asm
 #Check for xori
 try_xori:
 addi r4, r29, asm_ins_xori - asm_table_start
-call_sscanf_three
+li r5, 4
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try_xoris
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try_xoris
-
+beq- asm_xori_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_xori_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try_xoris
 #xori found
+asm_xori_found:
 process_imm_logical
 oris r3, r5, 0x6800
 b epilogue_main_asm
@@ -17601,23 +18231,49 @@ b epilogue_main_asm
 #Check for xoris
 try_xoris:
 addi r4, r29, asm_ins_xoris - asm_table_start
-call_sscanf_three
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ try__long
+addi r4, r29, r_r_hexc_end - asm_table_start
+call_sscanf_three_multi
 cmpwi r3, 3
-bne- try__long
-
+beq- asm_xoris_found
+addi r4, r29, r_r_hexl_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+beq- asm_xoris_found
+addi r4, r29, r_r_uimm_end - asm_table_start
+call_sscanf_three_multi
+cmpwi r3, 3
+bne+ try__long
 #xoris found
+asm_xoris_found:
 process_imm_logical
 oris r3, r5, 0x6C00
 b epilogue_main_asm
 
 #Check for .long (custom 8 digit hex value)
 try__long:
-addi r4, r29, asm_invalid_instruction - asm_table_start #Doesn't literally mean invalid instruction, I carried look-up table over from disassembler, plus there's always a possibility of merging both the assembler and disassembler into one 'unit/code'
-call_sscanf_one
+addi r4, r29, asm_invalid_instruction - asm_table_start
+li r5, 5
+mr r3, r31
+add r28, r31, r5
+bl memcmp
+cmpwi r3, 0
+bne+ cant_compile_source_line
+addi r4, r29, hexc_only_end - asm_table_start
+call_sscanf_one_multi
 cmpwi r3, 1
-bne- cant_compile_source_line
-
+beq- asm_RClong_found
+addi r4, r29, hexl_only_end - asm_table_start
+call_sscanf_one_multi
+cmpwi r3, 1
+bne+ cant_compile_source_line
 #.long found
+asm_RClong_found:
 lwz r3, 0x8 (sp)
 b epilogue_main_asm
 
@@ -17639,6 +18295,7 @@ lwz r0, 0x0034 (sp)
 lwz r31, 0x2C (sp)
 lwz r30, 0x28 (sp)
 lwz r29, 0x24 (sp)
+lwz r28, 0x20 (sp)
 mtlr r0
 addi sp, sp, 0x0030
 blr
